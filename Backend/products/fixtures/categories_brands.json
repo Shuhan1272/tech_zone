@@ -1,0 +1,584 @@
+[
+  {
+    "model": "products.category",
+    "pk": 1,
+    "fields": {
+      "parent": null,
+      "name": "Desktop",
+      "slug": "desktop",
+      "is_active": true,
+      "is_featured": true
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 2,
+    "fields": {
+      "parent": null,
+      "name": "Laptop",
+      "slug": "laptop",
+      "is_active": true,
+      "is_featured": true
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 3,
+    "fields": {
+      "parent": null,
+      "name": "Phone",
+      "slug": "phone",
+      "is_active": true,
+      "is_featured": true
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 4,
+    "fields": {
+      "parent": 1,
+      "name": "Gaming Desktop",
+      "slug": "gaming-desktop",
+      "is_active": true,
+      "is_featured": false
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 5,
+    "fields": {
+      "parent": 1,
+      "name": "Workstation",
+      "slug": "workstation",
+      "is_active": true,
+      "is_featured": false
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 6,
+    "fields": {
+      "parent": 1,
+      "name": "All-in-One PC",
+      "slug": "all-in-one-pc",
+      "is_active": true,
+      "is_featured": false
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 7,
+    "fields": {
+      "parent": 2,
+      "name": "Ultrabook",
+      "slug": "ultrabook",
+      "is_active": true,
+      "is_featured": false
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 8,
+    "fields": {
+      "parent": 2,
+      "name": "Gaming Laptop",
+      "slug": "gaming-laptop",
+      "is_active": true,
+      "is_featured": false
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 9,
+    "fields": {
+      "parent": 2,
+      "name": "Business Laptop",
+      "slug": "business-laptop",
+      "is_active": true,
+      "is_featured": false
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 10,
+    "fields": {
+      "parent": 3,
+      "name": "Smartphone",
+      "slug": "smartphone",
+      "is_active": true,
+      "is_featured": false
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 11,
+    "fields": {
+      "parent": 3,
+      "name": "Feature Phone",
+      "slug": "feature-phone",
+      "is_active": true,
+      "is_featured": false
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 12,
+    "fields": {
+      "parent": 3,
+      "name": "Refurbished Phone",
+      "slug": "refurbished-phone",
+      "is_active": true,
+      "is_featured": false
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 1,
+    "fields": {
+      "category": 4,
+      "name": "ASUS ROG",
+      "slug": "asus-rog",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 2,
+    "fields": {
+      "category": 4,
+      "name": "Alienware",
+      "slug": "alienware",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 3,
+    "fields": {
+      "category": 4,
+      "name": "HP Omen",
+      "slug": "hp-omen",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 4,
+    "fields": {
+      "category": 4,
+      "name": "Lenovo Legion",
+      "slug": "lenovo-legion",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 5,
+    "fields": {
+      "category": 4,
+      "name": "Acer Predator",
+      "slug": "acer-predator",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 6,
+    "fields": {
+      "category": 5,
+      "name": "Dell Precision",
+      "slug": "dell-precision",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 7,
+    "fields": {
+      "category": 5,
+      "name": "HP Z",
+      "slug": "hp-z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 8,
+    "fields": {
+      "category": 5,
+      "name": "ThinkStation",
+      "slug": "thinkstation",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 9,
+    "fields": {
+      "category": 5,
+      "name": "Apple Mac Studio",
+      "slug": "apple-mac-studio",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 10,
+    "fields": {
+      "category": 5,
+      "name": "MSI Pro",
+      "slug": "msi-pro",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 11,
+    "fields": {
+      "category": 6,
+      "name": "Apple iMac",
+      "slug": "apple-imac",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 12,
+    "fields": {
+      "category": 6,
+      "name": "HP Envy AIO",
+      "slug": "hp-envy-aio",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 13,
+    "fields": {
+      "category": 6,
+      "name": "Dell Inspiron AIO",
+      "slug": "dell-inspiron-aio",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 14,
+    "fields": {
+      "category": 6,
+      "name": "Lenovo IdeaCentre",
+      "slug": "lenovo-ideacentre",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 15,
+    "fields": {
+      "category": 6,
+      "name": "Acer Aspire C",
+      "slug": "acer-aspire-c",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 16,
+    "fields": {
+      "category": 7,
+      "name": "Dell XPS",
+      "slug": "dell-xps",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 17,
+    "fields": {
+      "category": 7,
+      "name": "ASUS ZenBook",
+      "slug": "asus-zenbook",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 18,
+    "fields": {
+      "category": 7,
+      "name": "HP Spectre",
+      "slug": "hp-spectre",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 19,
+    "fields": {
+      "category": 7,
+      "name": "Acer Swift",
+      "slug": "acer-swift",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 20,
+    "fields": {
+      "category": 7,
+      "name": "Apple MacBook Air",
+      "slug": "apple-macbook-air",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 21,
+    "fields": {
+      "category": 8,
+      "name": "Razer",
+      "slug": "razer",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 22,
+    "fields": {
+      "category": 8,
+      "name": "MSI Gaming",
+      "slug": "msi-gaming",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 23,
+    "fields": {
+      "category": 8,
+      "name": "Gigabyte Aorus",
+      "slug": "gigabyte-aorus",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 24,
+    "fields": {
+      "category": 8,
+      "name": "ASUS TUF",
+      "slug": "asus-tuf",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 25,
+    "fields": {
+      "category": 8,
+      "name": "Acer Nitro",
+      "slug": "acer-nitro",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 26,
+    "fields": {
+      "category": 9,
+      "name": "Lenovo ThinkPad",
+      "slug": "lenovo-thinkpad",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 27,
+    "fields": {
+      "category": 9,
+      "name": "Dell Latitude",
+      "slug": "dell-latitude",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 28,
+    "fields": {
+      "category": 9,
+      "name": "HP EliteBook",
+      "slug": "hp-elitebook",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 29,
+    "fields": {
+      "category": 9,
+      "name": "ASUS ExpertBook",
+      "slug": "asus-expertbook",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 30,
+    "fields": {
+      "category": 9,
+      "name": "Acer TravelMate",
+      "slug": "acer-travelmate",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 31,
+    "fields": {
+      "category": 10,
+      "name": "Apple",
+      "slug": "apple",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 32,
+    "fields": {
+      "category": 10,
+      "name": "Samsung",
+      "slug": "samsung",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 33,
+    "fields": {
+      "category": 10,
+      "name": "Google Pixel",
+      "slug": "google-pixel",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 34,
+    "fields": {
+      "category": 10,
+      "name": "OnePlus",
+      "slug": "oneplus",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 35,
+    "fields": {
+      "category": 10,
+      "name": "Xiaomi",
+      "slug": "xiaomi",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 36,
+    "fields": {
+      "category": 11,
+      "name": "Nokia",
+      "slug": "nokia",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 37,
+    "fields": {
+      "category": 11,
+      "name": "Itel",
+      "slug": "itel",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 38,
+    "fields": {
+      "category": 11,
+      "name": "Jio",
+      "slug": "jio",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 39,
+    "fields": {
+      "category": 11,
+      "name": "Alcatel",
+      "slug": "alcatel",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 40,
+    "fields": {
+      "category": 11,
+      "name": "Energizer",
+      "slug": "energizer",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 41,
+    "fields": {
+      "category": 12,
+      "name": "Back Market",
+      "slug": "back-market",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 42,
+    "fields": {
+      "category": 12,
+      "name": "Amazon Renewed",
+      "slug": "amazon-renewed",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 43,
+    "fields": {
+      "category": 12,
+      "name": "Swappa",
+      "slug": "swappa",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 44,
+    "fields": {
+      "category": 12,
+      "name": "Gazelle",
+      "slug": "gazelle",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 45,
+    "fields": {
+      "category": 12,
+      "name": "Reebelo",
+      "slug": "reebelo",
+      "is_active": true
+    }
+  }
+]

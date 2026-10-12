@@ -1,0 +1,472 @@
+[
+    {
+        "model": "products.variantoption",
+        "pk": 1,
+        "fields": {
+            "name": "RAM",
+            "slug": "ram",
+            "created_at": "2025-01-28T21:27:45Z",
+            "updated_at": "2025-01-28T21:27:45Z"
+        }
+    },
+    {
+        "model": "products.variantoption",
+        "pk": 2,
+        "fields": {
+            "name": "Storage",
+            "slug": "storage",
+            "created_at": "2025-09-13T03:24:41Z",
+            "updated_at": "2025-09-13T03:24:41Z"
+        }
+    },
+    {
+        "model": "products.variantoption",
+        "pk": 3,
+        "fields": {
+            "name": "Color",
+            "slug": "color",
+            "created_at": "2026-01-20T17:01:01Z",
+            "updated_at": "2026-01-20T17:01:01Z"
+        }
+    },
+    {
+        "model": "products.variantoption",
+        "pk": 4,
+        "fields": {
+            "name": "Processor",
+            "slug": "processor",
+            "created_at": "2025-01-10T11:57:17Z",
+            "updated_at": "2025-01-10T11:57:17Z"
+        }
+    },
+    {
+        "model": "products.variantoption",
+        "pk": 5,
+        "fields": {
+            "name": "Display Size",
+            "slug": "display-size",
+            "created_at": "2026-01-09T21:15:44Z",
+            "updated_at": "2026-01-09T21:15:44Z"
+        }
+    },
+    {
+        "model": "products.variantoption",
+        "pk": 6,
+        "fields": {
+            "name": "Operating System",
+            "slug": "operating-system",
+            "created_at": "2025-10-19T16:19:38Z",
+            "updated_at": "2025-10-19T16:19:38Z"
+        }
+    },
+    {
+        "model": "products.variantoption",
+        "pk": 7,
+        "fields": {
+            "name": "Graphics",
+            "slug": "graphics",
+            "created_at": "2026-07-10T10:52:03Z",
+            "updated_at": "2026-07-10T10:52:03Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 1,
+        "fields": {
+            "option": 1,
+            "value": "4GB",
+            "created_at": "2026-02-11T14:47:47Z",
+            "updated_at": "2026-02-11T14:47:47Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 2,
+        "fields": {
+            "option": 1,
+            "value": "8GB",
+            "created_at": "2025-02-28T23:13:00Z",
+            "updated_at": "2025-02-28T23:13:00Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 3,
+        "fields": {
+            "option": 1,
+            "value": "16GB",
+            "created_at": "2026-05-13T23:17:43Z",
+            "updated_at": "2026-05-13T23:17:43Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 4,
+        "fields": {
+            "option": 1,
+            "value": "32GB",
+            "created_at": "2025-05-15T19:14:15Z",
+            "updated_at": "2025-05-15T19:14:15Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 5,
+        "fields": {
+            "option": 1,
+            "value": "64GB",
+            "created_at": "2025-04-26T18:03:58Z",
+            "updated_at": "2025-04-26T18:03:58Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 6,
+        "fields": {
+            "option": 2,
+            "value": "128GB",
+            "created_at": "2026-03-12T03:10:49Z",
+            "updated_at": "2026-03-12T03:10:49Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 7,
+        "fields": {
+            "option": 2,
+            "value": "256GB",
+            "created_at": "2025-05-28T05:32:00Z",
+            "updated_at": "2025-05-28T05:32:00Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 8,
+        "fields": {
+            "option": 2,
+            "value": "512GB",
+            "created_at": "2026-05-31T23:59:59Z",
+            "updated_at": "2026-05-31T23:59:59Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 9,
+        "fields": {
+            "option": 2,
+            "value": "1TB",
+            "created_at": "2026-05-14T04:42:02Z",
+            "updated_at": "2026-05-14T04:42:02Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 10,
+        "fields": {
+            "option": 2,
+            "value": "2TB",
+            "created_at": "2026-01-09T11:56:01Z",
+            "updated_at": "2026-01-09T11:56:01Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 11,
+        "fields": {
+            "option": 3,
+            "value": "Black",
+            "created_at": "2025-01-10T22:19:00Z",
+            "updated_at": "2025-01-10T22:19:00Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 12,
+        "fields": {
+            "option": 3,
+            "value": "White",
+            "created_at": "2026-05-17T04:20:07Z",
+            "updated_at": "2026-05-17T04:20:07Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 13,
+        "fields": {
+            "option": 3,
+            "value": "Silver",
+            "created_at": "2026-01-27T11:38:17Z",
+            "updated_at": "2026-01-27T11:38:17Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 14,
+        "fields": {
+            "option": 3,
+            "value": "Space Gray",
+            "created_at": "2025-07-02T16:36:05Z",
+            "updated_at": "2025-07-02T16:36:05Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 15,
+        "fields": {
+            "option": 3,
+            "value": "Midnight Blue",
+            "created_at": "2026-08-09T11:00:54Z",
+            "updated_at": "2026-08-09T11:00:54Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 16,
+        "fields": {
+            "option": 4,
+            "value": "Intel Core i3",
+            "created_at": "2025-06-12T06:53:38Z",
+            "updated_at": "2025-06-12T06:53:38Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 17,
+        "fields": {
+            "option": 4,
+            "value": "Intel Core i5",
+            "created_at": "2026-01-22T08:28:29Z",
+            "updated_at": "2026-01-22T08:28:29Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 18,
+        "fields": {
+            "option": 4,
+            "value": "Intel Core i7",
+            "created_at": "2026-02-16T07:26:25Z",
+            "updated_at": "2026-02-16T07:26:25Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 19,
+        "fields": {
+            "option": 4,
+            "value": "AMD Ryzen 5",
+            "created_at": "2026-05-03T07:19:53Z",
+            "updated_at": "2026-05-03T07:19:53Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 20,
+        "fields": {
+            "option": 4,
+            "value": "AMD Ryzen 7",
+            "created_at": "2025-01-19T00:03:23Z",
+            "updated_at": "2025-01-19T00:03:23Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 21,
+        "fields": {
+            "option": 4,
+            "value": "Apple M2",
+            "created_at": "2025-04-08T03:17:35Z",
+            "updated_at": "2025-04-08T03:17:35Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 22,
+        "fields": {
+            "option": 4,
+            "value": "Apple M3",
+            "created_at": "2026-07-13T21:40:44Z",
+            "updated_at": "2026-07-13T21:40:44Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 23,
+        "fields": {
+            "option": 5,
+            "value": "13.3 Inch",
+            "created_at": "2025-11-28T09:36:05Z",
+            "updated_at": "2025-11-28T09:36:05Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 24,
+        "fields": {
+            "option": 5,
+            "value": "14 Inch",
+            "created_at": "2026-04-09T06:34:00Z",
+            "updated_at": "2026-04-09T06:34:00Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 25,
+        "fields": {
+            "option": 5,
+            "value": "15.6 Inch",
+            "created_at": "2026-07-26T13:30:47Z",
+            "updated_at": "2026-07-26T13:30:47Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 26,
+        "fields": {
+            "option": 5,
+            "value": "24 Inch",
+            "created_at": "2025-05-17T03:13:30Z",
+            "updated_at": "2025-05-17T03:13:30Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 27,
+        "fields": {
+            "option": 5,
+            "value": "27 Inch",
+            "created_at": "2025-02-02T08:00:28Z",
+            "updated_at": "2025-02-02T08:00:28Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 28,
+        "fields": {
+            "option": 5,
+            "value": "6.1 Inch",
+            "created_at": "2026-08-04T16:58:22Z",
+            "updated_at": "2026-08-04T16:58:22Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 29,
+        "fields": {
+            "option": 5,
+            "value": "6.7 Inch",
+            "created_at": "2025-10-13T22:45:30Z",
+            "updated_at": "2025-10-13T22:45:30Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 30,
+        "fields": {
+            "option": 6,
+            "value": "Windows 11 Home",
+            "created_at": "2025-09-07T22:54:55Z",
+            "updated_at": "2025-09-07T22:54:55Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 31,
+        "fields": {
+            "option": 6,
+            "value": "Windows 11 Pro",
+            "created_at": "2025-04-03T03:04:04Z",
+            "updated_at": "2025-04-03T03:04:04Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 32,
+        "fields": {
+            "option": 6,
+            "value": "macOS",
+            "created_at": "2025-12-22T20:03:08Z",
+            "updated_at": "2025-12-22T20:03:08Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 33,
+        "fields": {
+            "option": 6,
+            "value": "Free DOS / Linux",
+            "created_at": "2026-03-19T14:27:30Z",
+            "updated_at": "2026-03-19T14:27:30Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 34,
+        "fields": {
+            "option": 6,
+            "value": "Android",
+            "created_at": "2025-02-07T07:49:18Z",
+            "updated_at": "2025-02-07T07:49:18Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 35,
+        "fields": {
+            "option": 6,
+            "value": "iOS",
+            "created_at": "2026-07-30T15:23:24Z",
+            "updated_at": "2026-07-30T15:23:24Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 36,
+        "fields": {
+            "option": 7,
+            "value": "Intel UHD Graphics",
+            "created_at": "2026-04-29T06:44:05Z",
+            "updated_at": "2026-04-29T06:44:05Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 37,
+        "fields": {
+            "option": 7,
+            "value": "Intel Iris Xe Graphics",
+            "created_at": "2026-07-21T14:12:47Z",
+            "updated_at": "2026-07-21T14:12:47Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 38,
+        "fields": {
+            "option": 7,
+            "value": "NVIDIA GeForce RTX 3050",
+            "created_at": "2025-11-29T07:54:54Z",
+            "updated_at": "2025-11-29T07:54:54Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 39,
+        "fields": {
+            "option": 7,
+            "value": "NVIDIA GeForce RTX 4060",
+            "created_at": "2025-11-11T03:38:19Z",
+            "updated_at": "2025-11-11T03:38:19Z"
+        }
+    },
+    {
+        "model": "products.variantoptionvalue",
+        "pk": 40,
+        "fields": {
+            "option": 7,
+            "value": "AMD Radeon Graphics",
+            "created_at": "2025-08-21T19:56:27Z",
+            "updated_at": "2025-08-21T19:56:27Z"
+        }
+    }
+]
