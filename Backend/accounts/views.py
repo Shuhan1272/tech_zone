@@ -31,7 +31,8 @@ from .serializers import (
     ForgotPasswordSerializer,
     ResetPasswordSerializer,
     VerifyEmailOTPSerializer,
-    VerifyPasswordOTPSerializer
+    VerifyPasswordOTPSerializer,
+    ResendEmailOTPSerializer
 )
 
 from .utils import (
@@ -174,6 +175,59 @@ class VerifyEmailView(
                 'is_email_verified':
                     user.is_email_verified,
             }
+        })
+
+
+# =========================================================
+# RESEND REGISTER EMAIL OTP
+# =========================================================
+
+class ResendEmailOTPView(
+    generics.GenericAPIView
+):
+    """Issues a fresh verification OTP for an unverified account.
+
+    The customer already has an account at this point, so there is nothing to
+    register again — only a new code to send. The serializer enforces the
+    cooldown between sends.
+    """
+
+    serializer_class = (
+        ResendEmailOTPSerializer
+    )
+
+    permission_classes = [
+        AllowAny
+    ]
+
+    def post(
+        self,
+        request
+    ):
+
+        serializer = self.get_serializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        user = serializer.validated_data[
+            'user'
+        ]
+
+        # Replaces the stored OTP and its timestamp, then mails it.
+        send_verification_otp(user)
+
+        return Response({
+
+            'message':
+                'A new verification code has been sent to '
+                f'{user.email}.',
+
+            'email':
+                user.email,
         })
 
 

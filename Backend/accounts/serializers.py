@@ -179,7 +179,68 @@ class VerifyEmailOTPSerializer(
 
         return data
 
-    
+
+# =========================================================
+# RESEND REGISTER EMAIL OTP
+# =========================================================
+
+class ResendEmailOTPSerializer(
+    serializers.Serializer
+):
+
+    email = serializers.EmailField()
+
+    # A fresh code may be asked for once a minute. Without this the button
+    # can be held down and every press sends another mail.
+    RESEND_COOLDOWN = timedelta(seconds=60)
+
+    def validate(self, data):
+
+        email = data['email']
+
+        user = User.objects.filter(
+            email=email
+        ).first()
+
+        if not user:
+
+            raise serializers.ValidationError({
+                'email':
+                    'No account is waiting to be verified for this email.'
+            })
+
+        if user.is_email_verified:
+
+            raise serializers.ValidationError({
+                'email':
+                    'Email is already verified. Please sign in.'
+            })
+
+        if user.email_otp_created_at:
+
+            next_allowed = (
+                user.email_otp_created_at
+                + self.RESEND_COOLDOWN
+            )
+
+            if timezone.now() < next_allowed:
+
+                seconds = int(
+                    (next_allowed - timezone.now()).total_seconds()
+                ) + 1
+
+                raise serializers.ValidationError({
+                    'email':
+                        f'A code was just sent. '
+                        f'Please wait {seconds} second(s) before asking '
+                        f'for another.'
+                })
+
+        data['user'] = user
+
+        return data
+
+
 # =========================================================
 # LOGIN
 # =========================================================

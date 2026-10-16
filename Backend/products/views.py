@@ -177,6 +177,14 @@ class ProductImageViewSet(
         IsAdminOrReadOnly
     ]
 
+    filter_backends = [
+        DjangoFilterBackend,
+    ]
+
+    filterset_fields = [
+        'product',
+    ]
+
 
 # =========================================================
 # Product Question

@@ -1,0 +1,9 @@
+# Test configuration for the TechZone frontend.
+#
+# `integration` marks the suite in test/api_integration_test.dart, which talks
+# to a running Django server. Those tests skip themselves when no backend is
+# reachable, so they are safe to leave in the default run; exclude them with
+#   flutter test --exclude-tags integration
+tags:
+  integration:
+    description: Requires a running TechZone Django API.

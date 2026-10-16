@@ -106,6 +106,7 @@ class ProductImageSerializer(
 
         fields = [
             'id',
+            'product',
             'image',
             'alt_text',
             'is_primary',

@@ -175,21 +175,41 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 
 
-# load_dotenv()
-#
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-#
-# EMAIL_HOST = "smtp.gmail.com"
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-#
-# EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-# DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
-#
-# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 load_dotenv()
 
-# Email is printed in the terminal during development
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# =========================================================
+# EMAIL
+# =========================================================
+#
+# Registration and password reset both deliver a six digit OTP by email, so
+# this has to actually send. SMTP is used whenever credentials are present in
+# .env; without them the console backend prints the message to the terminal
+# running runserver, so a checkout with no secrets still works.
+
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "").strip()
+
+# Google shows app passwords in four groups of four for readability; the
+# spaces are not part of the password.
+EMAIL_HOST_PASSWORD = os.getenv(
+    "EMAIL_HOST_PASSWORD", ""
+).replace(" ", "")
+
+DEFAULT_FROM_EMAIL = (
+    os.getenv("DEFAULT_FROM_EMAIL")
+    or EMAIL_HOST_USER
+    or "no-reply@techzone.local"
+)
+
+# Without this a stalled SMTP handshake hangs the request that is sending the
+# OTP, and the customer just watches a spinner.
+EMAIL_TIMEOUT = 20
+
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

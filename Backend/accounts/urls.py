@@ -12,6 +12,7 @@ from .views import (
     ForgotPasswordView,
     ResetPasswordView,
     VerifyPasswordOTPView,
+    ResendEmailOTPView,
     AddressViewSet,
 )
 
@@ -61,6 +62,13 @@ urlpatterns = [
         'verify-email/',
         VerifyEmailView.as_view(),
         name='verify-email'
+    ),
+
+    # Resend the registration OTP
+    path(
+        'resend-email-otp/',
+        ResendEmailOTPView.as_view(),
+        name='resend-email-otp'
     ),
 
     # Profile

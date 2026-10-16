@@ -1,0 +1,18 @@
+# Analysis configuration for the TechZone Flutter frontend.
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - web/**
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Disabled deliberately. The rule fires on named constructor parameters
+    # that assign to a private field, e.g.
+    #     ApiClient({required TokenStorage tokens}) : _tokens = tokens;
+    # and suggests `{required this._tokens}`. That form is declarable but not
+    # callable from another library, because a named parameter may not begin
+    # with an underscore — so following the suggestion would break every call
+    # site. Keeping the explicit assignment is the only workable form here.
+    prefer_initializing_formals: false

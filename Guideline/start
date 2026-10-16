@@ -5,10 +5,7 @@ git switch main
 git pull origin main
 
 cd Backend
-cd venv\scripts
-activate
-cd..
-cd..
+.\venv\Scripts\Activate.ps1
 python manage.py runserver
 
 
