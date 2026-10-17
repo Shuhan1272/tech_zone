@@ -25,6 +25,14 @@ class CatalogProvider extends ChangeNotifier {
   Map<int, List<ProductImage>> _imageIndex = const {};
 
   bool _loading = false;
+
+  /// True while a fetch is in flight, whether or not it shows a spinner.
+  bool _inFlight = false;
+  bool _indexRefreshing = false;
+
+  /// Product ids already chased through [ensureImagesFor], so a product with
+  /// no photo is not refetched on every rebuild.
+  final Set<int> _chasedIds = <int>{};
   String? _error;
 
   List<Category> get categories => _categories;
@@ -50,6 +58,12 @@ class CatalogProvider extends ChangeNotifier {
 
   /// Primary image URL for a product card, or null to fall back to a
   /// placeholder. Reads the index fetched by [load].
+  ///
+  /// Kept free of side effects on purpose: every card calls this from inside
+  /// `context.select`, which re-runs the selector on each notification to see
+  /// whether the value changed. Logging here fired once per card per
+  /// notification, and on the web every log line crosses into the browser
+  /// console.
   String? primaryImageFor(int productId) {
     final images = _imageIndex[productId];
     if (images == null || images.isEmpty) return null;
@@ -59,34 +73,101 @@ class CatalogProvider extends ChangeNotifier {
   List<ProductImage> imagesFor(int productId) =>
       _imageIndex[productId] ?? const [];
 
-  Future<void> load({bool force = false}) async {
-    if (_loading) return;
+  /// Fetches the reference data the header and home page are built from.
+  ///
+  /// `silent` refetches without flipping [isLoading], so a background refresh
+  /// swaps the data in underneath the page instead of replacing it with a
+  /// spinner. That is how the image index picks up products added since the
+  /// tab was opened.
+  Future<void> load({bool force = false, bool silent = false}) async {
+    // Guards re-entry on its own, because a silent load deliberately leaves
+    // `_loading` alone — without this a 30s refresh timer would stack another
+    // fetch on top of one still in flight against a slow dev server.
+    if (_inFlight) return;
     if (!force && _categories.isNotEmpty) return;
 
-    _loading = true;
-    _error = null;
-    notifyListeners();
-
-    // Reference data is independent; fetch concurrently and let each part
-    // degrade on its own rather than failing the whole header.
-    final results = await Future.wait([
-      _service.fetchCategories().catchError((_) => <Category>[]),
-      _service.fetchBrands().catchError((_) => <Brand>[]),
-      _service.fetchNotices().catchError((_) => <Notice>[]),
-      _service.fetchImageIndex().catchError((_) => <int, List<ProductImage>>{}),
-    ]);
-
-    _categories = results[0] as List<Category>;
-    _brands = results[1] as List<Brand>;
-    _notices = results[2] as List<Notice>;
-    _imageIndex = results[3] as Map<int, List<ProductImage>>;
-
-    if (_categories.isEmpty) {
-      _error = 'Could not load the catalog. Is the TechZone API reachable?';
+    _inFlight = true;
+    if (!silent) {
+      _loading = true;
+      _error = null;
+      notifyListeners();
     }
 
-    _loading = false;
-    notifyListeners();
+    try {
+      // Reference data is independent, so each part is fetched concurrently
+      // and degrades on its own. A part that fails comes back null and the
+      // value already held is kept: this used to substitute an empty list,
+      // which meant one dropped request against the dev server wiped the
+      // image index and every photo on the page vanished until the next
+      // refresh happened to succeed.
+      final results = await Future.wait([
+        _orNull(_service.fetchCategories()),
+        _orNull(_service.fetchBrands()),
+        _orNull(_service.fetchNotices()),
+        _orNull(_service.fetchImageIndex()),
+      ]);
+
+      final categories = results[0] as List<Category>?;
+      final brands = results[1] as List<Brand>?;
+      final notices = results[2] as List<Notice>?;
+      final images = results[3] as Map<int, List<ProductImage>>?;
+
+      if (categories != null) _categories = categories;
+      if (brands != null) _brands = brands;
+      if (notices != null) _notices = notices;
+      if (images != null) _imageIndex = images;
+
+      if (_categories.isEmpty && !silent) {
+        _error = 'Could not load the catalog. Is the TechZone API reachable?';
+      }
+    } finally {
+      _inFlight = false;
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Resolves to null instead of throwing, so one failed part of [load] does
+  /// not take the rest of the reference data with it.
+  static Future<T?> _orNull<T>(Future<T> future) =>
+      future.then<T?>((value) => value).catchError((_) => null);
+
+  /// Fetches the image index again when a grid is showing products the index
+  /// has never heard of.
+  ///
+  /// The index is loaded once for the whole catalogue, so a product added
+  /// since the tab opened — or an index fetch that failed earlier — leaves
+  /// cards with a placeholder where a photo should be. Each unknown id is
+  /// only chased once, so a product that genuinely has no photo costs one
+  /// request, not one per rebuild.
+  void ensureImagesFor(Iterable<int> productIds) {
+    final unknown = productIds.where(
+      (id) => !_imageIndex.containsKey(id) && !_chasedIds.contains(id),
+    );
+    if (unknown.isEmpty) return;
+
+    _chasedIds.addAll(unknown);
+    // Out of the current build: this ends in notifyListeners().
+    Future.microtask(_refreshImageIndex);
+  }
+
+  Future<void> _refreshImageIndex() async {
+    if (_indexRefreshing) return;
+    _indexRefreshing = true;
+    try {
+      final index = await _service.fetchImageIndex();
+      if (index.isEmpty) return;
+      _imageIndex = index;
+      // Anything still missing after a good fetch really has no photo; drop
+      // the ids that are now known so a later upload can still be picked up.
+      _chasedIds.removeWhere(index.containsKey);
+      notifyListeners();
+    } catch (_) {
+      // Keep the index we have; the next refresh can try again.
+      _chasedIds.clear();
+    } finally {
+      _indexRefreshing = false;
+    }
   }
 }
 
@@ -99,6 +180,28 @@ class ProductListProvider extends ChangeNotifier {
   ProductListProvider(this._service);
 
   final ProductService _service;
+
+  /// Set by [dispose]. One of these belongs to each listing screen and is
+  /// disposed as soon as the customer navigates away, which regularly happens
+  /// while a fetch is still in flight. The response then notifies a disposed
+  /// notifier, `notifyListeners` throws, and because the screens do not await
+  /// their fetches that throw escapes as an unhandled error.
+  ///
+  /// [CatalogProvider] deliberately does not carry this: it lives for the
+  /// lifetime of the app and is never disposed mid-navigation.
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  /// [notifyListeners], unless this provider is already gone.
+  void _notify() {
+    if (_disposed) return;
+    notifyListeners();
+  }
 
   ProductQuery _query = const ProductQuery();
   Paginated<Product> _page = Paginated.empty<Product>();
@@ -127,6 +230,17 @@ class ProductListProvider extends ChangeNotifier {
   }
 
   Future<void> refresh() => _fetch(reset: true);
+
+  /// Refetches without showing a spinner, for a background refresh that must
+  /// not blank the grid the customer is reading.
+  ///
+  /// Does nothing once "Load more" has been used: `_query.page` has moved on,
+  /// so refetching it would replace the accumulated list with that one page
+  /// and the earlier products would vanish under the customer.
+  Future<void> refreshSilently() async {
+    if (_query.page > 1) return;
+    await _fetch(silent: true);
+  }
 
   Future<void> setCategory(String? slug) =>
       applyQuery(_query.copyWith(categorySlug: slug, specFilters: const {}));
@@ -172,7 +286,7 @@ class ProductListProvider extends ChangeNotifier {
     if (_loadingMore || _loading || !_page.hasNext) return;
 
     _loadingMore = true;
-    notifyListeners();
+    _notify();
 
     final token = ++_requestId;
     try {
@@ -188,18 +302,20 @@ class ProductListProvider extends ChangeNotifier {
     } finally {
       if (token == _requestId) {
         _loadingMore = false;
-        notifyListeners();
+        _notify();
       }
     }
   }
 
-  Future<void> _fetch({bool reset = false}) async {
+  Future<void> _fetch({bool reset = false, bool silent = false}) async {
     final token = ++_requestId;
 
-    _loading = true;
-    _error = null;
-    if (reset) _page = Paginated.empty<Product>();
-    notifyListeners();
+    if (!silent) {
+      _loading = true;
+      _error = null;
+      if (reset) _page = Paginated.empty<Product>();
+      _notify();
+    }
 
     try {
       final page = await _service.fetchProducts(_query);
@@ -207,12 +323,15 @@ class ProductListProvider extends ChangeNotifier {
       _page = page;
     } on ApiException catch (error) {
       if (token != _requestId) return;
+      // A failed background refresh keeps whatever is already on screen; only
+      // a foreground fetch is allowed to replace it with an error.
+      if (silent) return;
       _error = error.message;
       _page = Paginated.empty<Product>();
     } finally {
       if (token == _requestId) {
         _loading = false;
-        notifyListeners();
+        _notify();
       }
     }
   }

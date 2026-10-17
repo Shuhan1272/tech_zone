@@ -14,22 +14,19 @@ class Formatters {
     decimalDigits: 0,
   );
 
-  static final NumberFormat _moneyPrecise = NumberFormat.currency(
-    locale: 'en_US',
-    symbol: '৳ ',
-    decimalDigits: 2,
-  );
-
   static final NumberFormat _compact = NumberFormat.compact(locale: 'en_US');
   static final DateFormat _date = DateFormat('d MMM yyyy');
   static final DateFormat _dateTime = DateFormat('d MMM yyyy, h:mm a');
 
   /// Whole-taka display, which is how prices are quoted on the storefront.
-  /// Falls back to two decimals when the amount genuinely has paisa.
+  ///
+  /// Always whole taka, never paisa. A discounted price is derived from a
+  /// percentage, so it lands on fractions that are an artefact of that
+  /// arithmetic rather than a real price: 1,349 at 9.56% off comes out as
+  /// 1,220.0356, and a shelf label reading 1,220.04 is wrong, not precise.
   static String money(double? amount) {
     if (amount == null) return '—';
-    final hasFraction = (amount - amount.truncateToDouble()).abs() > 0.004;
-    return hasFraction ? _moneyPrecise.format(amount) : _money.format(amount);
+    return _money.format(amount);
   }
 
   static String compact(num value) => _compact.format(value);

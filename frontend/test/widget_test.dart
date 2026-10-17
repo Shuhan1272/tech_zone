@@ -123,30 +123,24 @@ void main() {
 
   group('Paginated', () {
     test('reads the DRF page envelope used by /products/', () {
-      final page = Paginated.fromAny<Product>(
-        {
-          'count': 3,
-          'next': null,
-          'previous': null,
-          'results': [
-            {'id': 1, 'name': 'A', 'slug': 'a'},
-            {'id': 2, 'name': 'B', 'slug': 'b'},
-          ],
-        },
-        (json) => Product.fromJson(json),
-      );
+      final page = Paginated.fromAny<Product>({
+        'count': 3,
+        'next': null,
+        'previous': null,
+        'results': [
+          {'id': 1, 'name': 'A', 'slug': 'a'},
+          {'id': 2, 'name': 'B', 'slug': 'b'},
+        ],
+      }, (json) => Product.fromJson(json));
       expect(page.count, 3);
       expect(page.items.length, 2);
       expect(page.hasNext, isFalse);
     });
 
     test('reads the bare array used by /categories/ and /brands/', () {
-      final page = Paginated.fromAny<Product>(
-        [
-          {'id': 1, 'name': 'A', 'slug': 'a'},
-        ],
-        (json) => Product.fromJson(json),
-      );
+      final page = Paginated.fromAny<Product>([
+        {'id': 1, 'name': 'A', 'slug': 'a'},
+      ], (json) => Product.fromJson(json));
       expect(page.count, 1);
       expect(page.items.single.slug, 'a');
     });

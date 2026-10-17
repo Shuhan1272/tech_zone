@@ -47,8 +47,7 @@ const _password = String.fromEnvironment(
 Future<bool> _serverIsUp() async {
   try {
     final uri = Uri.parse('${AppConfig.apiBaseUrl}/products/products/');
-    final client = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 4);
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 4);
     final request = await client.getUrl(uri);
     final response = await request.close();
     await response.drain<void>();
@@ -138,35 +137,38 @@ void main() {
       expect(brands.first.slug, isNotEmpty);
     });
 
-    test('GET /products/ returns a paginated page with priced variants',
-        () async {
-      if (!ready()) return;
-      final page = await products.fetchProducts(const ProductQuery());
+    test(
+      'GET /products/ returns a paginated page with priced variants',
+      () async {
+        if (!ready()) return;
+        final page = await products.fetchProducts(const ProductQuery());
 
-      expect(page.count, greaterThan(0));
-      expect(page.items, isNotEmpty);
+        expect(page.count, greaterThan(0));
+        expect(page.items, isNotEmpty);
 
-      for (final product in page.items) {
-        expect(product.slug, isNotEmpty);
-        final variant = product.primaryVariant;
-        expect(
-          variant,
-          isNotNull,
-          reason: '${product.slug} has no active variant',
-        );
-        // Price authority: the server sends all three figures.
-        expect(variant!.discountedPrice, greaterThan(0));
-        expect(variant.price, greaterThanOrEqualTo(variant.discountedPrice));
-      }
-    });
+        for (final product in page.items) {
+          expect(product.slug, isNotEmpty);
+          final variant = product.primaryVariant;
+          expect(
+            variant,
+            isNotNull,
+            reason: '${product.slug} has no active variant',
+          );
+          // Price authority: the server sends all three figures.
+          expect(variant!.discountedPrice, greaterThan(0));
+          expect(variant.price, greaterThanOrEqualTo(variant.discountedPrice));
+        }
+      },
+    );
 
     test('ordering=price really sorts by the discounted annotation', () async {
       if (!ready()) return;
       final ascending = await products.fetchProducts(
         const ProductQuery(sort: ProductSort.priceLowToHigh),
       );
-      final prices =
-          ascending.items.map((p) => p.primaryVariant!.discountedPrice).toList();
+      final prices = ascending.items
+          .map((p) => p.primaryVariant!.discountedPrice)
+          .toList();
       final sorted = [...prices]..sort();
       expect(prices, sorted);
 
@@ -228,30 +230,32 @@ void main() {
       expect(detail.variants, isNotEmpty);
     });
 
-    test('product images resolve to a product id and an absolute URL',
-        () async {
-      if (!ready()) return;
-      final index = await products.fetchImageIndex();
-      expect(
-        index,
-        isNotEmpty,
-        reason: 'needs `product` on ProductImageSerializer',
-      );
+    test(
+      'product images resolve to a product id and an absolute URL',
+      () async {
+        if (!ready()) return;
+        final index = await products.fetchImageIndex();
+        expect(
+          index,
+          isNotEmpty,
+          reason: 'needs `product` on ProductImageSerializer',
+        );
 
-      for (final entry in index.entries) {
-        expect(entry.key, greaterThan(0));
-        for (final image in entry.value) {
-          expect(image.url, startsWith('http'));
-          expect(image.productId, entry.key);
+        for (final entry in index.entries) {
+          expect(entry.key, greaterThan(0));
+          for (final image in entry.value) {
+            expect(image.url, startsWith('http'));
+            expect(image.productId, entry.key);
+          }
         }
-      }
 
-      // And the server-side filter narrows to one product.
-      final productId = index.keys.first;
-      final filtered = await products.fetchProductImages(productId);
-      expect(filtered, isNotEmpty);
-      expect(filtered.every((i) => i.productId == productId), isTrue);
-    });
+        // And the server-side filter narrows to one product.
+        final productId = index.keys.first;
+        final filtered = await products.fetchProductImages(productId);
+        expect(filtered, isNotEmpty);
+        expect(filtered.every((i) => i.productId == productId), isTrue);
+      },
+    );
 
     test('GET /core/notices/ parses', () async {
       if (!ready()) return;
@@ -265,9 +269,7 @@ void main() {
       // gate them behind sign-in rather than showing an empty list.
       await expectLater(
         products.fetchReviews(1),
-        throwsA(
-          isA<ApiException>().having((e) => e.statusCode, 'status', 401),
-        ),
+        throwsA(isA<ApiException>().having((e) => e.statusCode, 'status', 401)),
       );
     });
   });
@@ -333,8 +335,7 @@ void main() {
       );
     });
 
-    test('an expired access token is refreshed and the request replayed',
-        () async {
+    test('an expired access token is refreshed and the request replayed', () async {
       if (!ready()) return;
       await auth.login(email: _email, password: _password);
       final goodRefresh = tokens.refreshToken!;
@@ -436,18 +437,20 @@ void main() {
   // -------------------------------------------------------------- discounts
 
   group('optional endpoints', () {
-    test('the discount probe reports what this server actually supports',
-        () async {
-      if (!ready()) return;
-      final availability = await discounts.probe();
+    test(
+      'the discount probe reports what this server actually supports',
+      () async {
+        if (!ready()) return;
+        final availability = await discounts.probe();
 
-      // On the current backend `discounts.urls` is never included by
-      // `config/urls.py` and the app has no migrations, so this is
-      // `unavailable`. The assertion accepts any verdict so the test keeps
-      // passing once the route is wired up.
-      expect(availability, isA<DiscountAvailability>());
-      // ignore: avoid_print
-      print('Discount endpoint availability: ${availability.name}');
-    });
+        // On the current backend `discounts.urls` is never included by
+        // `config/urls.py` and the app has no migrations, so this is
+        // `unavailable`. The assertion accepts any verdict so the test keeps
+        // passing once the route is wired up.
+        expect(availability, isA<DiscountAvailability>());
+        // ignore: avoid_print
+        print('Discount endpoint availability: ${availability.name}');
+      },
+    );
   });
 }

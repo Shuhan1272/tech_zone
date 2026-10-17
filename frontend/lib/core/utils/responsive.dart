@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 
 /// Breakpoints for the storefront layout.
@@ -51,6 +53,26 @@ class Responsive {
         return 32;
     }
   }
+
+  /// Width available to a page's content, inside [PageContainer].
+  ///
+  /// This is the same arithmetic [PageContainer] performs — the window width
+  /// capped at [maxContentWidth], less a [gutter] on each side — exposed so a
+  /// widget can size itself without a `LayoutBuilder`.
+  ///
+  /// That matters beyond tidiness. A `LayoutBuilder` rebuilds its subtree from
+  /// inside the layout phase, and when that subtree holds anything hoverable
+  /// (an `InkWell`, any button) a pointer leaving it during a relayout calls
+  /// `setState` from `MouseTracker`, which `LayoutBuilder` defers to the next
+  /// frame. If the subtree is gone by then — a navigation, a filter change —
+  /// the deferred rebuild lands on detached render objects and the frame dies
+  /// with a cascade of `dropChild`/`detach`/"wrong build scope" assertions.
+  ///
+  /// Only valid for content laid out directly by [PageContainer]; anything
+  /// nested in a narrower box must subtract that box itself.
+  static double contentWidth(BuildContext context) =>
+      math.min(maxContentWidth, MediaQuery.sizeOf(context).width) -
+      gutter(context) * 2;
 
   /// Product grid columns, chosen per breakpoint.
   ///

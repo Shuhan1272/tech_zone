@@ -104,7 +104,7 @@ class _TopBar extends StatelessWidget {
                           children: [
                             IconButton(
                               onPressed: () =>
-                                  Scaffold.of(context).openDrawer(),
+                                  Scaffold.maybeOf(context)?.openDrawer(),
                               icon: const Icon(Icons.menu_rounded),
                               tooltip: 'Browse categories',
                             ),
@@ -386,6 +386,11 @@ class _CategoryBar extends StatelessWidget {
 
     final theme = Theme.of(context);
 
+    // The strip's own padding is 8 tighter than the page gutter on each side,
+    // because the buttons carry their own.
+    final sideInset = Responsive.gutter(context) - 8;
+    final barWidth = Responsive.contentWidth(context) + 16;
+
     return Material(
       color: theme.appBarTheme.backgroundColor,
       child: Center(
@@ -394,40 +399,41 @@ class _CategoryBar extends StatelessWidget {
             maxWidth: Responsive.maxContentWidth,
           ),
           child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: Responsive.gutter(context) - 8,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: sideInset),
             child: SizedBox(
               height: 44,
-              child: Row(
-                children: [
-                  // White on the blue band; _HeaderBand already sets the
-                  // foreground, so these buttons just inherit it.
-                  TextButton.icon(
-                    onPressed: () => context.go('/catalog'),
-                    icon: const Icon(Icons.grid_view_rounded, size: 16),
-                    label: const Text('All products'),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 2),
-                      itemBuilder: (context, index) {
-                        final category = categories[index];
-                        if (!category.hasChildren) {
-                          return Center(
-                            child: TextButton(
-                              onPressed: () => context.go(
-                                '/catalog?category=${category.slug}',
-                              ),
-                              child: Text(category.name),
+              // The strip is laid out at no less than the bar's own width and
+              // spaced apart, so a short list of categories spans the band
+              // instead of bunching at the left with a gap on the right. Once
+              // the categories outgrow the bar the row simply scrolls.
+              // Width is computed rather than measured with a LayoutBuilder:
+              // this strip is full of buttons, and a LayoutBuilder rebuilding
+              // hoverable children from inside layout is what brings the
+              // frame down when the pointer leaves one during a navigation.
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: barWidth),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // White on the blue band; _HeaderBand already sets
+                      // the foreground, so these buttons just inherit it.
+                      TextButton.icon(
+                        onPressed: () => context.go('/catalog'),
+                        icon: const Icon(Icons.grid_view_rounded, size: 16),
+                        label: const Text('All products'),
+                      ),
+                      for (final category in categories)
+                        if (!category.hasChildren)
+                          TextButton(
+                            onPressed: () => context.go(
+                              '/catalog?category=${category.slug}',
                             ),
-                          );
-                        }
-                        return Center(
-                          child: PopupMenuButton<String>(
+                            child: Text(category.name),
+                          )
+                        else
+                          PopupMenuButton<String>(
                             tooltip: category.name,
                             offset: const Offset(0, 40),
                             onSelected: (slug) =>
@@ -467,11 +473,9 @@ class _CategoryBar extends StatelessWidget {
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -658,16 +662,6 @@ class _Footer extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 24),
-                const Divider(),
-                const SizedBox(height: 12),
-                Text(
-                  'TechZone storefront — Flutter Web frontend on the TechZone '
-                  'Django REST API.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
                 ),
               ],
             ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +10,7 @@ import '../../core/utils/responsive.dart';
 import '../../models/product.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/catalog_provider.dart';
 import '../../providers/product_detail_provider.dart';
 import '../../services/product_service.dart';
 import '../../widgets/common.dart';
@@ -43,11 +46,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     _load();
   }
 
+  /// Starts the page's load. Deliberately not awaited — the screen renders
+  /// its own loading state from the provider — so `unawaited` marks that as
+  /// a decision rather than an oversight.
   void _load() {
-    _detail.load(
-      widget.slug,
-      isSignedIn: context.read<AuthProvider>().isSignedIn,
-      listEntry: widget.listEntry,
+    unawaited(
+      _detail.load(
+        widget.slug,
+        isSignedIn: context.read<AuthProvider>().isSignedIn,
+        listEntry: widget.listEntry,
+      ),
     );
   }
 
@@ -190,7 +198,18 @@ class _Gallery extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final urls = detail.imageUrls;
+    // The page fetches this product's images itself. When that one request
+    // fails the gallery would be empty even though the grid that linked here
+    // already knows the photo, so fall back to the catalogue's index.
+    final product = detail.product;
+    final urls = detail.imageUrls.isNotEmpty || product == null
+        ? detail.imageUrls
+        : context
+              .watch<CatalogProvider>()
+              .imagesFor(product.id)
+              .map((image) => image.url)
+              .where((url) => url.isNotEmpty)
+              .toList();
     final selected = urls.isEmpty
         ? null
         : urls[detail.selectedImageIndex.clamp(0, urls.length - 1)];

@@ -11,6 +11,29 @@ class ProductDetailProvider extends ChangeNotifier {
 
   final ProductService _service;
 
+  /// Set by [dispose]. This provider belongs to one product page and is
+  /// disposed the moment the customer navigates away — which routinely
+  /// happens while [load] is still waiting on the four requests it makes.
+  /// When those land they notify, and `notifyListeners` throws on a disposed
+  /// notifier; the screen does not await [load], so that throw escapes as an
+  /// unhandled error and takes the frame down with it.
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  /// [notifyListeners], unless this provider is already gone.
+  ///
+  /// Used everywhere in this class rather than only on the async paths, so a
+  /// later edit cannot reintroduce the bug by adding one more notify.
+  void _notify() {
+    if (_disposed) return;
+    notifyListeners();
+  }
+
   Product? _product;
   List<ProductImage> _images = const [];
   List<ProductReview> _reviews = const [];
@@ -64,7 +87,7 @@ class ProductDetailProvider extends ChangeNotifier {
     _loading = true;
     _error = null;
     _engagementRequiresAuth = false;
-    notifyListeners();
+    _notify();
 
     try {
       final detail = await _service.fetchProduct(slug);
@@ -91,7 +114,7 @@ class ProductDetailProvider extends ChangeNotifier {
       _product = null;
     } finally {
       _loading = false;
-      notifyListeners();
+      _notify();
     }
   }
 
@@ -110,19 +133,19 @@ class ProductDetailProvider extends ChangeNotifier {
     if (product == null) return;
     _engagementRequiresAuth = false;
     await _loadEngagement(product.id);
-    notifyListeners();
+    _notify();
   }
 
   void selectVariant(ProductVariant variant) {
     if (_selectedVariant?.id == variant.id) return;
     _selectedVariant = variant;
-    notifyListeners();
+    _notify();
   }
 
   void selectColor(String color) {
     if (_selectedColor == color) return;
     _selectedColor = color;
-    notifyListeners();
+    _notify();
   }
 
   void selectImage(int index) {
@@ -130,7 +153,7 @@ class ProductDetailProvider extends ChangeNotifier {
       return;
     }
     _selectedImageIndex = index;
-    notifyListeners();
+    _notify();
   }
 
   /// Posts a review. Returns null on success or the server's message.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -40,7 +42,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
   void initState() {
     super.initState();
     _list = ProductListProvider(context.read<ProductService>());
-    _list.applyQuery(_queryFromWidget());
+    // Not awaited: the screen renders the provider's own loading state.
+    unawaited(_list.applyQuery(_queryFromWidget()));
   }
 
   @override
@@ -52,7 +55,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         oldWidget.brandSlug != widget.brandSlug ||
         oldWidget.search != widget.search ||
         oldWidget.featured != widget.featured) {
-      _list.applyQuery(_queryFromWidget());
+      unawaited(_list.applyQuery(_queryFromWidget()));
     }
   }
 
@@ -73,12 +76,27 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final catalogProvider = context.read<CatalogProvider>();
+
     return ChangeNotifierProvider.value(
       value: _list,
-      child: const _CatalogBody(),
+      child: AutoRefresh(
+        onRefresh: () {
+          _list.refreshSilently();
+          catalogProvider.load(force: true, silent: true);
+        },
+        child: const _CatalogBody(),
+      ),
     );
   }
 }
+
+/// Desktop filter sidebar geometry. The grid needs to know how much of the
+/// content width the sidebar takes, so the layout and that calculation read
+/// the same constants rather than repeating the numbers.
+const double _sidebarWidth = 264;
+const double _sidebarGap = 26;
+const double _sidebarSpan = _sidebarWidth + _sidebarGap;
 
 class _CatalogBody extends StatelessWidget {
   const _CatalogBody();
@@ -103,8 +121,8 @@ class _CatalogBody extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(width: 264, child: filters),
-                const SizedBox(width: 26),
+                SizedBox(width: _sidebarWidth, child: filters),
+                const SizedBox(width: _sidebarGap),
                 Expanded(child: _ResultsArea(hasSidebar: true)),
               ],
             )
@@ -191,7 +209,12 @@ class _ResultsArea extends StatelessWidget {
           spacing: 12,
           runSpacing: 10,
           alignment: WrapAlignment.end,
-          children: [_SortDropdown(), _PageSizeDropdown()],
+          children: const [
+            // Keyed so a background refresh re-uses these elements instead
+            // of building new ones underneath an open dropdown menu.
+            _SortDropdown(key: ValueKey('sort')),
+            _PageSizeDropdown(key: ValueKey('page-size')),
+          ],
         ),
         const SizedBox(height: 16),
         if (list.isLoading)
@@ -217,6 +240,10 @@ class _ResultsArea extends StatelessWidget {
           ProductGrid(
             products: list.products,
             columns: Responsive.gridColumns(context, hasSidebar: hasSidebar),
+            // The sidebar and its gap come out of the page's content width.
+            availableWidth: hasSidebar
+                ? Responsive.contentWidth(context) - _sidebarSpan
+                : null,
           ),
           if (list.hasMore) ...[
             const SizedBox(height: 24),
@@ -245,6 +272,8 @@ class _ResultsArea extends StatelessWidget {
 }
 
 class _SortDropdown extends StatelessWidget {
+  const _SortDropdown({super.key});
+
   @override
   Widget build(BuildContext context) {
     final list = context.watch<ProductListProvider>();
@@ -276,6 +305,8 @@ class _SortDropdown extends StatelessWidget {
 
 /// Page size, capped at the backend's `max_page_size` of 90.
 class _PageSizeDropdown extends StatelessWidget {
+  const _PageSizeDropdown({super.key});
+
   static const _options = [12, 20, 48, AppConfig.maxPageSize];
 
   @override

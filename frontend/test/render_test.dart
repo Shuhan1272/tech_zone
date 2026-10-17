@@ -363,8 +363,9 @@ class _Harness {
 }
 
 void main() {
-  testWidgets('home renders the hero, notices, categories and products',
-      (tester) async {
+  testWidgets('home renders the hero, notices, categories and products', (
+    tester,
+  ) async {
     final harness = await _pumpApp(tester);
 
     expect(find.text('TechZone'), findsWidgets);
@@ -383,8 +384,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('catalog renders filters, sort controls and the grid',
-      (tester) async {
+  testWidgets('catalog renders filters, sort controls and the grid', (
+    tester,
+  ) async {
     await _pumpApp(tester, location: '/catalog');
 
     expect(find.text('All products'), findsWidgets);
@@ -397,8 +399,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('catalog shows the specification facets of a category',
-      (tester) async {
+  testWidgets('catalog shows the specification facets of a category', (
+    tester,
+  ) async {
     await _pumpApp(tester, location: '/catalog?category=desktop');
 
     // Facet groups come from Category.filters.
@@ -409,8 +412,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('product detail renders price, variant, specs and tabs',
-      (tester) async {
+  testWidgets('product detail renders price, variant, specs and tabs', (
+    tester,
+  ) async {
     await _pumpApp(tester, location: '/product/msi-cyborg-15');
 
     expect(find.textContaining('MSI Cyborg 15'), findsWidgets);
@@ -428,8 +432,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('cart renders lines and a total summed from server prices',
-      (tester) async {
+  testWidgets('cart renders lines and a total summed from server prices', (
+    tester,
+  ) async {
     await _pumpApp(tester, location: '/cart');
 
     // The footer links "Your cart" too, so scope to the page heading.
@@ -458,8 +463,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('checkout states plainly that order placement is unavailable',
-      (tester) async {
+  testWidgets('checkout states plainly that order placement is unavailable', (
+    tester,
+  ) async {
     await _pumpApp(tester, location: '/checkout');
 
     expect(find.text('Checkout'), findsOneWidget);
@@ -467,10 +473,7 @@ void main() {
     // The saved address is shown.
     expect(find.textContaining('House 12, Road 5'), findsWidgets);
     // And the missing order API is reported, with the button disabled.
-    expect(
-      find.text('Order placement is not available yet'),
-      findsOneWidget,
-    );
+    expect(find.text('Order placement is not available yet'), findsOneWidget);
     final button = tester.widget<FilledButton>(
       find.ancestor(
         of: find.text('Place order — not yet available'),
@@ -481,16 +484,18 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('cart redirects a signed-out visitor to a sign-in prompt',
-      (tester) async {
+  testWidgets('cart redirects a signed-out visitor to a sign-in prompt', (
+    tester,
+  ) async {
     await _pumpApp(tester, signedIn: false, location: '/cart');
 
     expect(find.text('Sign in to see your cart'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a protected route redirects a signed-out visitor to login',
-      (tester) async {
+  testWidgets('a protected route redirects a signed-out visitor to login', (
+    tester,
+  ) async {
     await _pumpApp(tester, signedIn: false, location: '/account');
 
     // AppRouter.redirect sends /account to /login?next=…
@@ -555,8 +560,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('account renders the profile and flags missing order history',
-      (tester) async {
+  testWidgets('account renders the profile and flags missing order history', (
+    tester,
+  ) async {
     await _pumpApp(tester, location: '/account');
 
     // The footer links "My profile" too.
@@ -577,13 +583,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('forgot-password starts on the request-code step',
-      (tester) async {
-    await _pumpApp(
-      tester,
-      signedIn: false,
-      location: '/forgot-password',
-    );
+  testWidgets('forgot-password starts on the request-code step', (
+    tester,
+  ) async {
+    await _pumpApp(tester, signedIn: false, location: '/forgot-password');
 
     expect(find.text('Reset your password'), findsOneWidget);
     expect(find.text('Send reset code'), findsOneWidget);

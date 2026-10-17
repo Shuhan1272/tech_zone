@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -169,26 +171,25 @@ class RemoteImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final src = url;
-    if (src == null || src.isEmpty) return _placeholder(context);
 
-    return CachedNetworkImage(
-      imageUrl: src,
+    if (src == null || src.isEmpty) {
+      return _placeholder(context);
+    }
+
+    return Image.network(
+      src,
       fit: fit,
-      fadeInDuration: const Duration(milliseconds: 180),
-      placeholder: (context, _) => _shimmer(context),
-      errorWidget: (context, _, _) => _placeholder(context),
-      imageBuilder: (context, provider) => Semantics(
-        label: label,
-        image: true,
-        // Catalogue photos arrive much larger than the box they are drawn in.
-        // medium filtering downsamples through mipmaps, which keeps a small
-        // icon or thumbnail crisp instead of aliasing it.
-        child: Image(
-          image: provider,
-          fit: fit,
-          filterQuality: FilterQuality.medium,
-        ),
-      ),
+      filterQuality: FilterQuality.low,
+      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return _shimmer(context);
+      },
+      errorBuilder: (context, error, stackTrace) {
+        debugPrint('IMAGE LOAD FAILED: $src');
+        debugPrint('ERROR: $error');
+        return _placeholder(context);
+      },
     );
   }
 
@@ -294,6 +295,85 @@ SnackBar appSnackBar(
             onPressed: onAction,
           ),
   );
+}
+
+/// Keeps a screen's data current without the customer reloading the page.
+///
+/// Calls [onRefresh] when the tab comes back into focus and on a slow timer
+/// while it is visible, so a product added in the admin — or a photo uploaded
+/// for one already listed — appears on its own. The callback is expected to
+/// refetch quietly: this never shows a spinner of its own.
+class AutoRefresh extends StatefulWidget {
+  const AutoRefresh({
+    super.key,
+    required this.onRefresh,
+    required this.child,
+    this.interval = const Duration(seconds: 30),
+  });
+
+  final VoidCallback onRefresh;
+  final Widget child;
+  final Duration interval;
+
+  @override
+  State<AutoRefresh> createState() => _AutoRefreshState();
+}
+
+class _AutoRefreshState extends State<AutoRefresh> with WidgetsBindingObserver {
+  Timer? _timer;
+
+  ModalRoute<dynamic>? _route;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _route = ModalRoute.of(context);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _start();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _start() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // On the web this follows the browser tab's visibility. There is no point
+    // polling a tab nobody is looking at, and letting requests pile up behind
+    // a hidden tab is how a background refresh turns into a stall.
+    if (state == AppLifecycleState.resumed) {
+      _start();
+      _refresh();
+    } else {
+      _timer?.cancel();
+      _timer = null;
+    }
+  }
+
+  void _refresh() {
+    if (!mounted) return;
+
+    final route = _route;
+    if (route != null && !route.isCurrent) return;
+
+    widget.onRefresh();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Small pill label, e.g. a discount badge or stock status.
