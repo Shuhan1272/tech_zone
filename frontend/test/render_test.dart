@@ -369,7 +369,10 @@ void main() {
     final harness = await _pumpApp(tester);
 
     expect(find.text('TechZone'), findsWidgets);
-    expect(find.text('Technology that keeps up with you'), findsOneWidget);
+    // This surface is desktop width, where the banner is the supplied
+    // artwork: its copy is pixels, and the call to action is a labelled
+    // hotspot laid over it.
+    expect(find.bySemanticsLabel('Shop all products'), findsOneWidget);
     // Notice banner from /core/notices/.
     expect(find.text('Eid sale is live'), findsOneWidget);
     // Category tile from /products/categories/.
@@ -605,7 +608,7 @@ void main() {
 
     // The mobile layout swaps the category bar for a drawer button.
     expect(find.byIcon(Icons.menu_rounded), findsOneWidget);
-    expect(find.text('Technology that keeps up with you'), findsOneWidget);
+    expect(find.text('Upgrade Your\nEveryday Tech'), findsOneWidget);
     // takeException catches RenderFlex overflow errors.
     expect(tester.takeException(), isNull);
   });
