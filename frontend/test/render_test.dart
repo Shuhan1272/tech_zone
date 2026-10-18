@@ -22,10 +22,12 @@ import 'package:techzone/providers/account_provider.dart';
 import 'package:techzone/providers/auth_provider.dart';
 import 'package:techzone/providers/cart_provider.dart';
 import 'package:techzone/providers/catalog_provider.dart';
+import 'package:techzone/providers/order_provider.dart';
 import 'package:techzone/services/account_service.dart';
 import 'package:techzone/services/auth_service.dart';
 import 'package:techzone/services/cart_service.dart';
 import 'package:techzone/services/discount_service.dart';
+import 'package:techzone/services/order_service.dart';
 import 'package:techzone/services/product_service.dart';
 
 // ---------------------------------------------------------------- fixtures
@@ -155,15 +157,78 @@ const _address = {
   'region': 'Dhaka',
 };
 
+const _orderItem = {
+  'id': 1,
+  'variant_id': 1,
+  'product_name': 'MSI Cyborg 15 A13VE Gaming Laptop',
+  'product_slug': 'msi-cyborg-15',
+  'variant_sku': 'msi-cyborg-15-8GB-512GB',
+  'options': {'RAM': '8GB', 'Storage': '512GB'},
+  'unit_price': '140000.00',
+  'unit_discount_percentage': '11.50',
+  'unit_price_paid': '123900.00',
+  'quantity': 2,
+  'line_total': '247800.00',
+};
+
+/// `OrderDetailSerializer` output. The list endpoint returns the same shape
+/// without `items`, `shipping_address` and `customer_note`, and the screens
+/// cope with both, so one fixture serves for both here.
+const _order = {
+  'order_number': 'TZ-261018-A4F9C2',
+  'status': 'pending',
+  'status_display': 'Pending',
+  'payment_method': 'cod',
+  'payment_method_display': 'Cash on Delivery',
+  'payment_status': 'unpaid',
+  'payment_status_display': 'Unpaid',
+  'items_subtotal': '280000.00',
+  'product_discount_total': '32200.00',
+  'coupon_discount': '0.00',
+  'shipping_fee': '0.00',
+  'grand_total': '247800.00',
+  'total_quantity': 2,
+  'item_count': 1,
+  'summary': 'MSI Cyborg 15 A13VE Gaming Laptop',
+  'placed_at': '2026-10-18T09:15:00Z',
+  'items': [_orderItem],
+  'shipping_address': {
+    'recipient': 'Abdur Rahman',
+    'company': '',
+    'phone': '01712345678',
+    'address1': 'House 12, Road 5',
+    'address2': '',
+    'city': 'Dhaka',
+    'postal_code': '1207',
+    'region': 'Dhaka',
+    'country': 'Bangladesh',
+  },
+  'customer_note': '',
+};
+
 /// Replays the fixtures above for whichever path Dio asks for.
 class _FakeAdapter implements HttpClientAdapter {
-  _FakeAdapter({this.signedIn = true, this.cartItems = const [_cartItem]});
+  _FakeAdapter({
+    this.signedIn = true,
+    this.cartItems = const [_cartItem],
+    this.orders = const [_order],
+  });
 
   final bool signedIn;
   final List<Map<String, dynamic>> cartItems;
+  final List<Map<String, dynamic>> orders;
 
   /// Paths requested, so a test can assert what the UI actually called.
   final List<String> calls = [];
+
+  /// Every `Idempotency-Key` an order POST arrived with, so a test can prove
+  /// the client sends one and reuses it rather than inventing a new key.
+  final List<String> placedKeys = [];
+
+  /// The same key as carried in the request *body*. A browser drops any
+  /// header the server has not allowed through CORS, so the client sends it
+  /// both ways and both are asserted.
+  final List<String> placedBodyKeys = [];
 
   @override
   Future<ResponseBody> fetch(
@@ -226,6 +291,48 @@ class _FakeAdapter implements HttpClientAdapter {
           'updated_at': '2026-10-02T10:35:00Z',
         };
       }
+    } else if (path == '/orders/') {
+      if (!signedIn) {
+        status = 401;
+        body = {'detail': 'Authentication credentials were not provided.'};
+      } else if (options.method == 'POST') {
+        placedKeys.add((options.headers['Idempotency-Key'] ?? '').toString());
+
+        final sent = options.data;
+        placedBodyKeys.add(
+          sent is Map ? (sent['idempotency_key'] ?? '').toString() : '',
+        );
+
+        status = 201;
+        body = _order;
+      } else {
+        body = {
+          'count': orders.length,
+          'next': null,
+          'previous': null,
+          'results': orders,
+        };
+      }
+    } else if (path.startsWith('/orders/')) {
+      if (!signedIn) {
+        status = 401;
+        body = {'detail': 'Authentication credentials were not provided.'};
+      } else {
+        final number = path.substring('/orders/'.length).replaceAll('/', '');
+
+        Map<String, dynamic>? match;
+        for (final row in orders) {
+          if (row['order_number'] == number) match = row;
+        }
+
+        if (match == null) {
+          // What the real server answers for somebody else's order too.
+          status = 404;
+          body = {'detail': 'Not found.'};
+        } else {
+          body = match;
+        }
+      }
     } else if (path.startsWith('/discounts/')) {
       // Mirrors the real server: the app is not routed.
       status = 404;
@@ -272,6 +379,7 @@ Future<_Harness> _pumpApp(
   WidgetTester tester, {
   bool signedIn = true,
   List<Map<String, dynamic>> cartItems = const [_cartItem],
+  List<Map<String, dynamic>> orders = const [_order],
   String location = '/',
   Size surface = const Size(1600, 2600),
 }) async {
@@ -290,7 +398,11 @@ Future<_Harness> _pumpApp(
         : {},
   );
 
-  final adapter = _FakeAdapter(signedIn: signedIn, cartItems: cartItems);
+  final adapter = _FakeAdapter(
+    signedIn: signedIn,
+    cartItems: cartItems,
+    orders: orders,
+  );
   final tokens = TokenStorage();
   final dio = Dio()
     ..httpClientAdapter = adapter
@@ -306,6 +418,7 @@ Future<_Harness> _pumpApp(
   final cartService = CartService(client);
   final accountService = AccountService(client);
   final discountService = DiscountService(client);
+  final orderService = OrderService(client);
 
   final auth = AuthProvider(service: authService, tokens: tokens);
   final catalog = CatalogProvider(productService);
@@ -315,6 +428,7 @@ Future<_Harness> _pumpApp(
     discountService: discountService,
   );
   final account = AccountProvider(accountService);
+  final orderProvider = OrderProvider(orderService);
 
   // Dio needs the real event loop; see _settle.
   await tester.runAsync(() async {
@@ -338,10 +452,12 @@ Future<_Harness> _pumpApp(
         Provider<CartService>.value(value: cartService),
         Provider<DiscountService>.value(value: discountService),
         Provider<AccountService>.value(value: accountService),
+        Provider<OrderService>.value(value: orderService),
         ChangeNotifierProvider<AuthProvider>.value(value: auth),
         ChangeNotifierProvider<CatalogProvider>.value(value: catalog),
         ChangeNotifierProvider<CartProvider>.value(value: cart),
         ChangeNotifierProvider<AccountProvider>.value(value: account),
+        ChangeNotifierProvider<OrderProvider>.value(value: orderProvider),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light(),
@@ -351,15 +467,26 @@ Future<_Harness> _pumpApp(
   );
   await _settle(tester);
 
-  return _Harness(adapter: adapter, auth: auth, cart: cart);
+  return _Harness(
+    adapter: adapter,
+    auth: auth,
+    cart: cart,
+    orders: orderProvider,
+  );
 }
 
 class _Harness {
-  _Harness({required this.adapter, required this.auth, required this.cart});
+  _Harness({
+    required this.adapter,
+    required this.auth,
+    required this.cart,
+    required this.orders,
+  });
 
   final _FakeAdapter adapter;
   final AuthProvider auth;
   final CartProvider cart;
+  final OrderProvider orders;
 }
 
 void main() {
@@ -453,8 +580,12 @@ void main() {
     // 123900 x 2 = 247800
     expect(find.textContaining('247,800'), findsWidgets);
     expect(find.text('Proceed to checkout'), findsOneWidget);
-    // Coupons are unavailable on this backend and must say so.
-    expect(find.text('Coupons not available yet'), findsOneWidget);
+    // Shipping is stated as zero rather than left out, so the customer is not
+    // left wondering what delivery costs.
+    expect(find.text('Shipping'), findsOneWidget);
+    // Coupons are unavailable on this backend and must say so rather than
+    // offering a code box that cannot work.
+    expect(find.text('Coupons Coming Soon'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -466,7 +597,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('checkout states plainly that order placement is unavailable', (
+  testWidgets('checkout offers cash on delivery with a live Place order', (
     tester,
   ) async {
     await _pumpApp(tester, location: '/checkout');
@@ -475,15 +606,103 @@ void main() {
     expect(find.text('Delivery address'), findsOneWidget);
     // The saved address is shown.
     expect(find.textContaining('House 12, Road 5'), findsWidgets);
-    // And the missing order API is reported, with the button disabled.
-    expect(find.text('Order placement is not available yet'), findsOneWidget);
+
+    // Cash on delivery, stated as the only method and as unpaid-for-now.
+    expect(find.text('Cash on Delivery'), findsOneWidget);
+    expect(find.text('Online payment is not available yet.'), findsOneWidget);
+
     final button = tester.widget<FilledButton>(
       find.ancestor(
-        of: find.text('Place order — not yet available'),
+        of: find.textContaining('Place order'),
         matching: find.byType(FilledButton),
       ),
     );
-    expect(button.onPressed, isNull, reason: 'must not fake an order');
+    expect(
+      button.onPressed,
+      isNotNull,
+      reason: 'the order API is routed, so the button must work',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('placing an order posts once, with an idempotency key', (
+    tester,
+  ) async {
+    final harness = await _pumpApp(tester, location: '/checkout');
+
+    await tester.tap(find.textContaining('Place order'));
+    await _settle(tester);
+
+    // Exactly one POST, carrying a key.
+    expect(
+      harness.adapter.calls.where((call) => call == 'POST /orders/').length,
+      1,
+    );
+    expect(harness.adapter.placedKeys, hasLength(1));
+    expect(harness.adapter.placedKeys.single, isNotEmpty);
+
+    // And the same key in the body, so the guarantee survives a server whose
+    // CORS configuration does not let the header through.
+    expect(
+      harness.adapter.placedBodyKeys.single,
+      harness.adapter.placedKeys.single,
+    );
+
+    // The order number came back and the app moved to the order.
+    expect(harness.orders.lastPlaced?.orderNumber, 'TZ-261018-A4F9C2');
+    expect(find.text('TZ-261018-A4F9C2'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('order history lists the orders the server returned', (
+    tester,
+  ) async {
+    await _pumpApp(tester, location: '/account/orders');
+
+    expect(find.text('Your orders'), findsOneWidget);
+    expect(find.text('TZ-261018-A4F9C2'), findsOneWidget);
+    expect(find.text('Pending'), findsOneWidget);
+    // The server's total, shown as whole taka.
+    expect(find.textContaining('247,800'), findsWidgets);
+    expect(find.text('View details'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('order history renders an empty state with no orders', (
+    tester,
+  ) async {
+    await _pumpApp(tester, location: '/account/orders', orders: const []);
+
+    expect(find.text('No orders yet'), findsOneWidget);
+    expect(find.text('Browse products'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('order detail shows items, totals and the delivery address', (
+    tester,
+  ) async {
+    await _pumpApp(tester, location: '/account/orders/TZ-261018-A4F9C2');
+
+    expect(find.text('TZ-261018-A4F9C2'), findsOneWidget);
+    expect(find.textContaining('MSI Cyborg 15'), findsWidgets);
+    // Payment state is stated honestly: cash on delivery, not yet paid.
+    expect(find.text('Cash on Delivery · Unpaid'), findsOneWidget);
+    // Shipping is shown even at zero.
+    expect(find.text('Shipping'), findsOneWidget);
+    expect(find.textContaining('247,800'), findsWidgets);
+    // The address snapshot.
+    expect(find.text('Abdur Rahman'), findsWidgets);
+    expect(find.textContaining('House 12, Road 5'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('an order number that is not the customer\'s shows not found', (
+    tester,
+  ) async {
+    await _pumpApp(tester, location: '/account/orders/TZ-000000-ZZZZZZ');
+
+    expect(find.text('Order not available'), findsOneWidget);
+    expect(find.text('All orders'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
@@ -563,7 +782,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('account renders the profile and flags missing order history', (
+  testWidgets('account renders the profile and links to order history', (
     tester,
   ) async {
     await _pumpApp(tester, location: '/account');
@@ -572,7 +791,16 @@ void main() {
     expect(find.text('My profile'), findsWidgets);
     expect(find.text('Flutter Tester'), findsWidgets);
     expect(find.text('tester@example.com'), findsWidgets);
-    expect(find.text('Order history unavailable'), findsOneWidget);
+
+    // Order history is a working link now, not a disabled placeholder.
+    final tile = tester.widget<ListTile>(
+      find.ancestor(
+        of: find.text('Order history'),
+        matching: find.byType(ListTile),
+      ),
+    );
+    expect(tile.onTap, isNotNull);
+    expect(find.text('Order history unavailable'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

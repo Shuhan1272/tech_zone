@@ -12,6 +12,8 @@ import '../../screens/cart/cart_screen.dart';
 import '../../screens/catalog/catalog_screen.dart';
 import '../../screens/checkout/checkout_screen.dart';
 import '../../screens/home/home_screen.dart';
+import '../../screens/orders/order_details_screen.dart';
+import '../../screens/orders/order_history_screen.dart';
 import '../../screens/product/product_detail_screen.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/common.dart';
@@ -32,11 +34,16 @@ class AppRouter {
   final AuthProvider _auth;
 
   /// Routes that need a signed-in customer.
+  ///
+  /// Everything under `/account/` is protected too — see the redirect below —
+  /// because an order detail URL carries an order number and so cannot be
+  /// listed here exhaustively.
   static const _protected = <String>{
     '/checkout',
     '/account',
     '/account/address',
     '/account/password',
+    '/account/orders',
   };
 
   late final GoRouter router = GoRouter(
@@ -51,7 +58,10 @@ class AppRouter {
       final location = state.matchedLocation;
       final isAuthRoute = _authRoutes.contains(location);
 
-      if (!_auth.isSignedIn && _protected.contains(location)) {
+      final needsAuth =
+          _protected.contains(location) || location.startsWith('/account/');
+
+      if (!_auth.isSignedIn && needsAuth) {
         final next = Uri.encodeQueryComponent(state.uri.toString());
         return '/login?next=$next';
       }
@@ -133,6 +143,20 @@ class AppRouter {
                 path: 'password',
                 name: 'change-password',
                 builder: (context, state) => const ChangePasswordScreen(),
+              ),
+              GoRoute(
+                path: 'orders',
+                name: 'orders',
+                builder: (context, state) => const OrderHistoryScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':orderNumber',
+                    name: 'order-detail',
+                    builder: (context, state) => OrderDetailsScreen(
+                      orderNumber: state.pathParameters['orderNumber']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

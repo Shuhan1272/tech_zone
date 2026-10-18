@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 import os
 
@@ -173,6 +174,14 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+# A browser sends a preflight OPTIONS for any request carrying a header
+# outside the CORS safelist, and blocks the real request unless the server
+# names that header back. django-cors-headers' default list does not include
+# Idempotency-Key, so without this line the checkout POST never leaves the
+# browser -- and the failure reaches JavaScript as a bare network error, which
+# looks exactly like the server being down.
+CORS_ALLOW_HEADERS = (*default_headers, 'idempotency-key')
 
 
 load_dotenv()

@@ -77,7 +77,15 @@ class ApiEndpoints {
   static const String applyDiscount = '/discounts/apply/';
 
   // ------------------------------------------------------------------ orders
-  /// The `order` app contains no models, serializers, views or urls, and is
-  /// not routed. There is no order API to call yet.
+  /// `POST` places an order from the signed-in customer's cart — no prices or
+  /// totals are sent, the server reads them from the cart and the catalogue.
+  /// `GET` lists that customer's own orders, newest first, paginated.
+  ///
+  /// A `POST` should carry an `Idempotency-Key` header: the same key can only
+  /// ever produce one order, so a double tap or a retried request is safe.
   static const String orders = '/orders/';
+
+  /// One order, addressed by its order *number* (`TZ-261018-A4F9C2`) rather
+  /// than a primary key. Another customer's order answers 404, not 403.
+  static String order(String orderNumber) => '/orders/$orderNumber/';
 }

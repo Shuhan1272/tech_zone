@@ -444,6 +444,9 @@ class OrderSummaryCard extends StatelessWidget {
                 value: '-${Formatters.money(cart.couponDiscount)}',
                 valueColor: AppPalette.of(context).accent,
               ),
+            // Stated rather than left blank: no delivery charge is calculated
+            // anywhere in TechZone, so the real figure is zero.
+            _SummaryRow(label: 'Shipping', value: Formatters.money(0)),
             const SizedBox(height: 10),
             const Divider(),
             const SizedBox(height: 10),

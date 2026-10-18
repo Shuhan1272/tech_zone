@@ -203,8 +203,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         enabled: false,
                         decoration: const InputDecoration(
                           labelText: 'Email address',
-                          helperText:
-                              'Your email is read-only on the TechZone API.',
+                          helperText: 'Your email is not changeable. ',
                         ),
                       ),
                       if (_editing) ...[
@@ -293,20 +292,12 @@ class _AccountScreenState extends State<AccountScreen> {
                       ListTile(
                         leading: const Icon(Icons.receipt_long_outlined),
                         title: const Text('Order history'),
-                        subtitle: const Text('Not available yet'),
-                        enabled: false,
+                        subtitle: const Text('Your past and current orders'),
                         trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push('/account/orders'),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                const UnavailableNotice(
-                  title: 'Order history unavailable',
-                  message:
-                      'The TechZone backend has no order API yet, so there is '
-                      'no order history to show.',
-                  icon: Icons.history_rounded,
                 ),
               ],
             ),

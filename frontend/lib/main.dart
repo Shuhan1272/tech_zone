@@ -9,10 +9,12 @@ import 'providers/account_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/catalog_provider.dart';
+import 'providers/order_provider.dart';
 import 'services/account_service.dart';
 import 'services/auth_service.dart';
 import 'services/cart_service.dart';
 import 'services/discount_service.dart';
+import 'services/order_service.dart';
 import 'services/product_service.dart';
 
 void main() {
@@ -40,11 +42,13 @@ class _TechZoneAppState extends State<TechZoneApp> {
   late final ProductService _productService;
   late final CartService _cartService;
   late final DiscountService _discountService;
+  late final OrderService _orderService;
 
   late final AuthProvider _auth;
   late final CatalogProvider _catalog;
   late final CartProvider _cart;
   late final AccountProvider _account;
+  late final OrderProvider _orders;
 
   late final AppRouter _router;
 
@@ -60,6 +64,7 @@ class _TechZoneAppState extends State<TechZoneApp> {
     _productService = ProductService(_client);
     _cartService = CartService(_client);
     _discountService = DiscountService(_client);
+    _orderService = OrderService(_client);
 
     _auth = AuthProvider(service: _authService, tokens: _tokens);
     _catalog = CatalogProvider(_productService);
@@ -69,13 +74,16 @@ class _TechZoneAppState extends State<TechZoneApp> {
       discountService: _discountService,
     );
     _account = AccountProvider(_accountService);
+    _orders = OrderProvider(_orderService);
 
     // A failed token refresh drops the app to signed-out and clears the cart,
-    // rather than leaving the UI in a half-authenticated state.
+    // rather than leaving the UI in a half-authenticated state. Order history
+    // belongs to one customer, so it goes too.
     _client.onSessionExpired = () {
       _auth.handleSessionExpired();
       _cart.reset();
       _account.reset();
+      _orders.reset();
     };
 
     _router = AppRouter(_auth);
@@ -103,6 +111,7 @@ class _TechZoneAppState extends State<TechZoneApp> {
     _catalog.dispose();
     _cart.dispose();
     _account.dispose();
+    _orders.dispose();
     super.dispose();
   }
 
@@ -118,12 +127,14 @@ class _TechZoneAppState extends State<TechZoneApp> {
         Provider<CartService>.value(value: _cartService),
         Provider<DiscountService>.value(value: _discountService),
         Provider<AccountService>.value(value: _accountService),
+        Provider<OrderService>.value(value: _orderService),
 
         // App-wide state.
         ChangeNotifierProvider<AuthProvider>.value(value: _auth),
         ChangeNotifierProvider<CatalogProvider>.value(value: _catalog),
         ChangeNotifierProvider<CartProvider>.value(value: _cart),
         ChangeNotifierProvider<AccountProvider>.value(value: _account),
+        ChangeNotifierProvider<OrderProvider>.value(value: _orders),
       ],
       child: MaterialApp.router(
         title: 'TechZone',

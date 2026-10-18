@@ -2,21 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/utils/responsive.dart';
 import '../../providers/account_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/order_provider.dart';
 import '../../widgets/common.dart';
 import '../cart/cart_screen.dart';
 
-/// Checkout review.
+/// Checkout.
 ///
-/// This screen stops short of placing an order, and says so plainly, because
-/// the backend has no order API: the `order` app contains no models,
-/// serializers, views or urls, and `config/urls.py` routes nothing for it.
-/// Everything that *can* be confirmed — the line items, the server's prices
-/// and the shipping address — is shown and verified here, so wiring up a
-/// `POST /api/v1/orders/` later is the only remaining step.
+/// Places the cart as an order through `POST /api/v1/orders/`. Note what this
+/// screen does *not* send: no prices, no totals, no item list. The server
+/// reads the cart itself, prices it from the catalogue, checks stock, writes
+/// the order and empties the cart — all in one transaction — so the only
+/// thing the client decides is the payment method.
+///
+/// Cash on delivery is the only method, and an order comes back *unpaid*:
+/// placing an order does not pay for it, and nothing here pretends it does.
+///
+/// Success is whatever the server says it is. The cart is cleared and the
+/// customer is moved on only after an order number comes back.
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
 
@@ -35,11 +43,61 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
+  /// Sends the order, then acts only on what the server answered.
+  Future<void> _placeOrder() async {
+    final orders = context.read<OrderProvider>();
+    final cart = context.read<CartProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+
+    // The provider refuses a re-entrant call too; the disabled button is only
+    // the visible half of the same guard.
+    if (orders.isPlacing) return;
+
+    final order = await orders.placeOrder();
+
+    if (!mounted) return;
+
+    if (order == null) {
+      messenger.showSnackBar(
+        appSnackBar(
+          context,
+          message:
+              orders.placeError ??
+              'We could not place your order. Please try again.',
+          ok: false,
+        ),
+      );
+
+      // The server is the authority on the cart, so re-read it rather than
+      // guessing what the failure did or did not change.
+      await cart.load();
+      return;
+    }
+
+    messenger.showSnackBar(
+      appSnackBar(
+        context,
+        message:
+            'Order ${order.orderNumber} placed. '
+            'Pay ${Formatters.money(order.grandTotal)} on delivery.',
+        ok: true,
+      ),
+    );
+
+    router.go('/account/orders/${order.orderNumber}');
+
+    // Only now is the cart cleared locally: the backend emptied it inside the
+    // same transaction that wrote the order.
+    cart.load();
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final cart = context.watch<CartProvider>();
     final account = context.watch<AccountProvider>();
+    final orders = context.watch<OrderProvider>();
     final theme = Theme.of(context);
 
     if (!auth.isSignedIn) {
@@ -155,22 +213,66 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(height: 14),
                 _StepCard(
                   step: 3,
-                  title: 'Place your order',
+                  title: 'Payment and confirmation',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const UnavailableNotice(
-                        title: 'Online ordering is coming soon',
-                        message:
-                            "We're working on bringing you a smooth and secure "
-                            "checkout experience. Please check back soon.",
-                        icon: Icons.receipt_long_outlined,
-                      ),
+                      const _CashOnDeliveryBlock(),
+                      if (orders.placeError != null) ...[
+                        const SizedBox(height: 14),
+                        UnavailableNotice(
+                          title: 'Order not placed',
+                          message: orders.placeError!,
+                          icon: Icons.error_outline_rounded,
+                        ),
+                      ],
                       const SizedBox(height: 14),
                       FilledButton.icon(
-                        onPressed: null,
-                        icon: const Icon(Icons.lock_outline_rounded, size: 18),
-                        label: const Text('Place Order — Coming Soon'),
+                        // Disabled while a submission is in flight, so a
+                        // second tap cannot start a second order.
+                        onPressed:
+                            orders.isPlacing ||
+                                !account.hasAddress ||
+                                cart.isEmpty
+                            ? null
+                            : _placeOrder,
+                        icon: orders.isPlacing
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.check_rounded, size: 18),
+                        label: Text(
+                          orders.isPlacing
+                              ? 'Placing your order…'
+                              : 'Place order — '
+                                    '${Formatters.money(cart.orderTotal)}',
+                        ),
+                      ),
+                      if (!account.hasAddress) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Add a delivery address in step 1 before placing '
+                          'your order.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Text(
+                        'Your order is confirmed by TechZone before anything '
+                        'is reserved for you. You will get an order number '
+                        'you can quote to us.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -181,6 +283,88 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The payment method, of which there is exactly one.
+///
+/// Rendered as a selected option rather than plain text so that adding bKash
+/// or a card later is a matter of adding siblings, not redesigning the step.
+class _CashOnDeliveryBlock extends StatelessWidget {
+  const _CashOnDeliveryBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border.all(color: palette.accent, width: 1.4),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.radio_button_checked_rounded,
+                size: 20,
+                color: palette.accent,
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cash on Delivery',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Pay in cash when your order reaches you. Nothing is '
+                      'charged now.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.payments_outlined, size: 20, color: palette.accent),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Icon(
+              Icons.info_outline_rounded,
+              size: 15,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'Online payment is not available yet.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

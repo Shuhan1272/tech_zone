@@ -148,6 +148,9 @@ class ApiClient {
     Object? body,
     Map<String, dynamic>? query,
     bool skipAuth = false,
+    // Per-request headers, for the one-off headers a single endpoint needs:
+    // `Idempotency-Key` on order placement. Merged with the client defaults.
+    Map<String, String>? headers,
   }) => _send<T>(
     () => _dio.post<T>(
       path,
@@ -156,6 +159,7 @@ class ApiClient {
       options: Options(
         extra: {'skipAuth': skipAuth},
         contentType: Headers.jsonContentType,
+        headers: headers,
       ),
     ),
   );
