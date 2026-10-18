@@ -467,14 +467,14 @@ class OrderSummaryCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            Text(
-              'Shipping is not calculated by the TechZone API, so it is not '
-              'included here.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
-            ),
+            // Text(
+            //   'Shipping is not calculated by the TechZone API, so it is not '
+            //   'included here.',
+            //   style: theme.textTheme.bodySmall?.copyWith(
+            //     color: theme.colorScheme.onSurfaceVariant,
+            //     height: 1.4,
+            //   ),
+            // ),
             const SizedBox(height: 18),
             const _CouponField(),
             if (showCheckoutButton) ...[
@@ -570,16 +570,14 @@ class _CouponFieldState extends State<_CouponField> {
 
     if (!cart.canApplyCoupon) {
       return const UnavailableNotice(
-        title: 'Coupons not available yet',
+        title: 'Coupons Coming Soon',
         message:
-            'This TechZone server does not expose the discount endpoints: '
-            'discounts.urls is not included in config/urls.py and '
-            'POST /api/v1/discounts/apply/ is not implemented. The coupon '
-            'field will activate automatically once they are.',
+            'We’re working on bringing you exciting discounts! '
+            'Coupon codes will be available soon. Stay tuned for '
+            'special offers on your favorite products.',
         icon: Icons.local_offer_outlined,
       );
     }
-
     final applied = cart.appliedDiscount;
     if (applied != null) {
       return Container(

@@ -160,32 +160,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const UnavailableNotice(
-                        title: 'Order placement is not available yet',
+                        title: 'Online ordering is coming soon',
                         message:
-                            'The TechZone backend has no order API: the '
-                            'order app has no models, serializers, views or '
-                            'URLs, and nothing is routed at '
-                            '/api/v1/orders/. Your cart and address are saved '
-                            'on the server, so nothing is lost — this step '
-                            'will work as soon as the order endpoint exists.',
+                            "We're working on bringing you a smooth and secure "
+                            "checkout experience. Please check back soon.",
                         icon: Icons.receipt_long_outlined,
                       ),
                       const SizedBox(height: 14),
                       FilledButton.icon(
-                        // Deliberately disabled: there is no endpoint to call,
-                        // and faking a success would misreport the outcome.
                         onPressed: null,
                         icon: const Icon(Icons.lock_outline_rounded, size: 18),
-                        label: const Text('Place order — not yet available'),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'No payment integration is wired up either; the '
-                        'backend defines no payment models or endpoints.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.45,
-                        ),
+                        label: const Text('Place Order — Coming Soon'),
                       ),
                     ],
                   ),
