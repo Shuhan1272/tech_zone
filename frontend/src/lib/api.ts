@@ -381,26 +381,36 @@ export async function api<T>(
 
 export const endpoints = {
 
+  // Products
   products: '/api/v1/products/products/',
   images: '/api/v1/products/product-images/',
   categories: '/api/v1/products/categories/',
   brands: '/api/v1/products/brands/',
 
+  // Core - Notices
+  notices: '/api/v1/core/notices/',
+
+  // Questions and Reviews
   questions: '/api/v1/products/questions/',
   reviews: '/api/v1/products/reviews/',
 
+  // Cart
   cart: '/api/v1/cart/',
   cartItems: '/api/v1/cart/items/',
 
+  // Orders
   orders: '/api/v1/orders/',
   checkout: '/api/v1/orders/checkout/',
 
+  // Wishlist
   wishlist: '/api/v1/wishlist/',
   wishlistItems: '/api/v1/wishlist/items/',
 
+  // Payments
   payments: '/api/v1/payments/',
   paymentInitiate: '/api/v1/payments/initiate/',
 
+  // PC Builder
   pcBuilds: '/api/v1/pc-builder/builds/',
   pcComponents: '/api/v1/pc-builder/components/',
 };

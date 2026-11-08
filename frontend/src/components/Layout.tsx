@@ -3,6 +3,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type FormEvent,
   type ReactNode,
 } from 'react';
@@ -18,6 +19,98 @@ import { getCategories } from '../lib/data';
 import { Link, navigate, useRoute } from '../lib/router';
 import type { Category } from '../lib/types';
 import { Icon, Button } from './UI';
+
+// ==========================================
+// TECHZONE CONTACT INFORMATION
+// ==========================================
+
+const SUPPORT_EMAIL = 'techzone@gmail.com';
+const SUPPORT_PHONE = '01339883436';
+
+const GMAIL_COMPOSE_URL =
+  'https://mail.google.com/mail/?view=cm&fs=1' +
+  `&to=${encodeURIComponent(SUPPORT_EMAIL)}` +
+  `&su=${encodeURIComponent('TechZone Customer Inquiry')}`;
+
+// ==========================================
+// FOOTER STYLES
+// ==========================================
+
+const footerStyles: Record<string, CSSProperties> = {
+  footer: {
+    paddingTop: '38px',
+    paddingBottom: '0',
+  },
+
+  main: {
+    display: 'grid',
+    gridTemplateColumns:
+      'minmax(220px, 1.5fr) repeat(3, minmax(140px, 1fr))',
+    columnGap: '40px',
+    rowGap: '26px',
+    alignItems: 'start',
+    paddingBottom: '32px',
+  },
+
+  column: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '12px',
+    minWidth: 0,
+  },
+
+  heading: {
+    margin: '0 0 5px',
+    fontSize: '15px',
+    fontWeight: 700,
+    lineHeight: '1.5',
+  },
+
+  link: {
+    display: 'block',
+    width: 'fit-content',
+    maxWidth: '100%',
+    fontSize: '14px',
+    lineHeight: '1.6',
+    color: 'inherit',
+    textDecoration: 'none',
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
+    margin: 0,
+    padding: 0,
+  },
+
+  description: {
+    margin: '12px 0 0',
+    fontSize: '13px',
+    lineHeight: '1.7',
+    maxWidth: '280px',
+  },
+
+  contactText: {
+    margin: 0,
+    fontSize: '13px',
+    lineHeight: '1.6',
+  },
+
+  contactLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '9px',
+    color: 'inherit',
+    textDecoration: 'none',
+    fontSize: '13px',
+    lineHeight: '1.6',
+    overflowWrap: 'anywhere',
+    maxWidth: '100%',
+  },
+
+  bottom: {
+    paddingTop: '17px',
+    paddingBottom: '17px',
+  },
+};
 
 export function Layout({
   children,
@@ -37,7 +130,7 @@ export function Layout({
   const wish = useWishlist();
 
   // ==========================================
-  // WISHLIST ITEM COUNT
+  // WISHLIST COUNT
   // ==========================================
 
   const wishlistCount = auth.user
@@ -47,7 +140,7 @@ export function Layout({
   const accountRef = useRef<HTMLDivElement>(null);
 
   // ==========================================
-  // LOAD ALL CATEGORIES FROM DJANGO API
+  // LOAD CATEGORIES
   // ==========================================
 
   useEffect(() => {
@@ -68,7 +161,7 @@ export function Layout({
   }, [pathname]);
 
   // ==========================================
-  // CLOSE ACCOUNT MENU WHEN CLICKING OUTSIDE
+  // CLOSE ACCOUNT MENU ON OUTSIDE CLICK
   // ==========================================
 
   useEffect(() => {
@@ -89,7 +182,7 @@ export function Layout({
   }, []);
 
   // ==========================================
-  // MOBILE DRAWER BODY SCROLL
+  // MOBILE DRAWER SCROLL
   // ==========================================
 
   useEffect(() => {
@@ -122,6 +215,35 @@ export function Layout({
     setMenuOpen(false);
     navigate(to);
   };
+
+  // ==========================================
+  // RESPONSIVE FOOTER
+  // ==========================================
+
+  const [footerWidth, setFooterWidth] = useState(
+    typeof window !== 'undefined'
+      ? window.innerWidth
+      : 1200
+  );
+
+  useEffect(() => {
+    const updateWidth = () => {
+      setFooterWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', updateWidth);
+
+    return () => {
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, []);
+
+  const footerColumns =
+    footerWidth < 600
+      ? 'repeat(2, minmax(0, 1fr))'
+      : footerWidth < 950
+        ? 'repeat(2, minmax(0, 1fr))'
+        : 'minmax(220px, 1.5fr) repeat(3, minmax(140px, 1fr))';
 
   // ==========================================
   // MAIN LAYOUT
@@ -211,16 +333,6 @@ export function Layout({
             aria-label="Quick links"
           >
 
-            {/* PC BUILDER */}
-
-            {/* <Link
-              to="/pc-builder"
-              className="header-action"
-            >
-              <Icon name="pc" size={21} />
-              <span>PC Builder</span>
-            </Link> */}
-
             {/* COMPARE */}
 
             <Link
@@ -237,7 +349,7 @@ export function Layout({
               )}
             </Link>
 
-            {/* WISHLIST WITH COUNT */}
+            {/* WISHLIST */}
 
             <Link
               to="/wishlist"
@@ -398,7 +510,7 @@ export function Layout({
       </header>
 
       {/* ======================================
-          CATEGORY NAVIGATION - ALL CATEGORIES
+          CATEGORY NAVIGATION
           ====================================== */}
 
       <div className="category-nav">
@@ -468,12 +580,26 @@ export function Layout({
         {children}
       </main>
 
-      {/* FOOTER */}
+      {/* ======================================
+          PROFESSIONAL RESPONSIVE FOOTER
+          ====================================== */}
 
-      <footer className="site-footer">
-        <div className="container-wide footer-main">
+      <footer
+        className="site-footer"
+        style={footerStyles.footer}
+      >
+        <div
+          className="container-wide"
+          style={{
+            ...footerStyles.main,
+            gridTemplateColumns: footerColumns,
+            columnGap: footerWidth < 600 ? '20px' : '40px',
+          }}
+        >
 
-          <div className="footer-brand">
+          {/* COLUMN 1: BRAND */}
+
+          <div style={footerStyles.column}>
             <Link
               to="/"
               className="brand-logo brand-logo-dark"
@@ -487,96 +613,134 @@ export function Layout({
               </span>
             </Link>
 
-            <p>
-              Discover technology that moves you forward.
-              Genuine products, transparent prices, and
-              a shopping experience built around you.
+            <p style={footerStyles.description}>
+              Your trusted destination for genuine
+              technology, competitive prices, and
+              nationwide delivery.
             </p>
 
             <div className="footer-trust">
-              <Icon name="shield-check" size={19} />
+              <Icon name="shield-check" size={17} />
               Shop confidently with TechZone
             </div>
           </div>
 
-          <div>
-            <h4>Explore</h4>
+          {/* COLUMN 2: EXPLORE */}
 
-            <Link to="/catalog">
-              All products
-            </Link>
+          <div style={footerStyles.column}>
+            <h4 style={footerStyles.heading}>
+              Explore
+            </h4>
 
-            <Link to="/catalog?featured=true">
-              Featured deals
-            </Link>
-
-            <Link to="/pc-builder">
-              PC Builder
-            </Link>
-
-            <Link to="/compare">
-              Compare products
-            </Link>
-          </div>
-
-          <div>
-            <h4>My account</h4>
-
-            <Link to="/account">
-              Account settings
-            </Link>
-
-            <Link to="/orders">
-              Order history
-            </Link>
-
-            <Link to="/wishlist">
-              Wishlist
-            </Link>
-
-            <Link to="/account/address">
-              Delivery address
-            </Link>
-          </div>
-
-          <div>
-            <h4>Why TechZone</h4>
-
-            <p className="footer-small">
-              <Icon name="truck" size={18} />
-              Nationwide delivery
-            </p>
-
-            <p className="footer-small">
-              <Icon name="shield" size={18} />
-              Genuine technology
-            </p>
-
-            <p className="footer-small">
-              <Icon name="headphones" size={18} />
-              Friendly support
-            </p>
-
-            <div className="footer-newsletter">
-              Built for your next upgrade.
+            <div style={footerStyles.link}>
+              <Link to="/catalog">
+                All products
+              </Link>
             </div>
+
+            <div style={footerStyles.link}>
+              <Link to="/catalog?featured=true">
+                Featured deals
+              </Link>
+            </div>
+
+            <div style={footerStyles.link}>
+              <Link to="/compare">
+                Compare products
+              </Link>
+            </div>
+          </div>
+
+          {/* COLUMN 3: MY ACCOUNT */}
+
+          <div style={footerStyles.column}>
+            <h4 style={footerStyles.heading}>
+              My account
+            </h4>
+
+            <div style={footerStyles.link}>
+              <Link to="/account">
+                Account settings
+              </Link>
+            </div>
+
+            <div style={footerStyles.link}>
+              <Link to="/orders">
+                Order history
+              </Link>
+            </div>
+
+            <div style={footerStyles.link}>
+              <Link to="/wishlist">
+                Wishlist
+              </Link>
+            </div>
+
+            <div style={footerStyles.link}>
+              <Link to="/account/address">
+                Address
+              </Link>
+            </div>
+          </div>
+
+          {/* COLUMN 4: CONTACT US */}
+
+          <div style={footerStyles.column}>
+            <h4 style={footerStyles.heading}>
+              Contact Us
+            </h4>
+
+            <p style={footerStyles.contactText}>
+              Have any questions or queries?
+              We're here to help.
+            </p>
+
+            {/* GMAIL COMPOSE */}
+
+            <a
+              href={GMAIL_COMPOSE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={footerStyles.contactLink}
+              title="Send an email using Gmail"
+            >
+              <Icon name="mail" size={17} />
+              <span>{SUPPORT_EMAIL}</span>
+            </a>
+
+            {/* PHONE */}
+
+            <a
+              href="tel:+8801339883436"
+              style={footerStyles.contactLink}
+              title="Call TechZone"
+            >
+              <Icon name="phone" size={17} />
+              <span>{SUPPORT_PHONE}</span>
+            </a>
           </div>
         </div>
 
-        <div className="container-wide footer-bottom">
+        {/* FOOTER BOTTOM */}
+
+        <div
+          className="container-wide footer-bottom"
+          style={footerStyles.bottom}
+        >
           <span>
             © {new Date().getFullYear()} TechZone.
             All rights reserved.
           </span>
 
           <span>
-            Designed for a better tech shopping
-            experience.
+            Genuine products. Nationwide delivery.
           </span>
         </div>
       </footer>
 
-      {/* COMPARISON FLOATING BAR */}
+      {/* ======================================
+          COMPARISON FLOATING BAR
+          ====================================== */}
 
       {compare.ids.length > 0 &&
         pathname !== '/compare' && (
@@ -614,7 +778,9 @@ export function Layout({
         </div>
       )}
 
-      {/* MOBILE DRAWER */}
+      {/* ======================================
+          MOBILE DRAWER
+          ====================================== */}
 
       {menuOpen && (
         <div
