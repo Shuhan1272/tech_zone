@@ -1,4 +1,8 @@
+
+from django.urls import path
 from rest_framework.routers import DefaultRouter
+
+from .compare_views import ProductComparisonView
 
 from .views import (
     CategoryViewSet,
@@ -14,6 +18,10 @@ from .views import (
 router = DefaultRouter()
 
 
+# =========================================================
+# Category
+# =========================================================
+
 router.register(
     'categories',
     CategoryViewSet,
@@ -21,11 +29,20 @@ router.register(
 )
 
 
+# =========================================================
+# Brand
+# =========================================================
+
 router.register(
     'brands',
     BrandViewSet,
     basename='brand'
 )
+
+
+# =========================================================
+# Product
+# =========================================================
 
 router.register(
     'products',
@@ -33,11 +50,21 @@ router.register(
     basename='product'
 )
 
+
+# =========================================================
+# Product Variant
+# =========================================================
+
 router.register(
     'variants',
     ProductVariantViewSet,
     basename='product-variant'
 )
+
+
+# =========================================================
+# Product Image
+# =========================================================
 
 router.register(
     'product-images',
@@ -45,11 +72,21 @@ router.register(
     basename='product-image'
 )
 
+
+# =========================================================
+# Product Question
+# =========================================================
+
 router.register(
     'questions',
     ProductQuestionViewSet,
     basename='product-question'
 )
+
+
+# =========================================================
+# Product Review
+# =========================================================
 
 router.register(
     'reviews',
@@ -57,4 +94,15 @@ router.register(
     basename='product-review'
 )
 
-urlpatterns = router.urls
+
+# =========================================================
+# Product Comparison + Router URLs
+# =========================================================
+
+urlpatterns = [
+    path(
+        'products/compare/',
+        ProductComparisonView.as_view(),
+        name='product-compare'
+    ),
+] + router.urls

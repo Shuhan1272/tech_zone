@@ -12,6 +12,12 @@ urlpatterns = [
     path('api/v1/products/', include('products.urls')),
     path('api/v1/core/', include('core.urls')),
     path('api/v1/cart/',include('cart.urls')),
+    path('api/v1/discounts/', include('discounts.urls')),  
+    path('api/v1/orders/', include('order.urls')), 
+    path('api/v1/payments/', include('payments.urls')),
+    path('api/v1/wishlist/', include('wishlist.urls')),
+    path("api/v1/pc-builder/",include("pc_builder.urls")
+),
 ]
 
 if settings.DEBUG:

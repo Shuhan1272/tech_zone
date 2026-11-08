@@ -1,0 +1,60 @@
+
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<div style="max-width:650px; padding:20px;">
+
+    <h2>{{ action_name }}</h2>
+
+    <p>
+        Are you sure you want to perform this action
+        for <strong>Order #{{ order.id }}</strong>?
+    </p>
+
+    <table style="margin:20px 0; width:100%;">
+        <tr>
+            <th>Customer</th>
+            <td>{{ order.shipping_name }}</td>
+        </tr>
+
+        <tr>
+            <th>Order Status</th>
+            <td>{{ order.get_status_display }}</td>
+        </tr>
+
+        <tr>
+            <th>Payment Status</th>
+            <td>{{ order.get_payment_status_display }}</td>
+        </tr>
+
+        <tr>
+            <th>Total</th>
+            <td>৳{{ order.total_amount }}</td>
+        </tr>
+    </table>
+
+    <form method="post" action="{{ action_url }}">
+
+        {% csrf_token %}
+
+        <button
+            type="submit"
+            class="default"
+            style="padding:10px 20px;"
+        >
+            Yes, {{ action_name }}
+        </button>
+
+        <a
+            href="{{ cancel_url }}"
+            style="margin-left:15px;"
+        >
+            Go Back
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,9 +1,12 @@
+
+from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
 
 from .models import (
     Category,
     Brand,
+    Color,
     Product,
     ProductVariant,
     ProductImage,
@@ -18,6 +21,7 @@ from .models import (
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
+
     list_display = (
         "name",
         "parent",
@@ -44,6 +48,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
+
     list_display = (
         "name",
         "is_active",
@@ -68,6 +73,7 @@ class BrandAdmin(admin.ModelAdmin):
 # =========================================================
 
 class ProductImageInline(admin.TabularInline):
+
     model = ProductImage
     extra = 1
 
@@ -82,6 +88,7 @@ class ProductImageInline(admin.TabularInline):
     )
 
     def image_preview(self, obj):
+
         if obj.image:
             return format_html(
                 '<img src="{}" width="80" height="80" '
@@ -95,17 +102,72 @@ class ProductImageInline(admin.TabularInline):
 
 
 # =========================================================
+# PRODUCT VARIANT FORM WITH PLACEHOLDERS
+# =========================================================
+
+class ProductVariantAdminForm(forms.ModelForm):
+
+    class Meta:
+        model = ProductVariant
+        fields = "__all__"
+
+        widgets = {
+            "ram": forms.TextInput(
+                attrs={
+                    "placeholder": "e.g. 8GB, 16GB, 32GB",
+                }
+            ),
+
+            "storage": forms.TextInput(
+                attrs={
+                    "placeholder": "e.g. 128GB, 256GB, 512GB",
+                }
+            ),
+
+            "price": forms.NumberInput(
+                attrs={
+                    "placeholder": "e.g. 274999",
+                    "min": "0",
+                    "step": "0.01",
+                }
+            ),
+
+            "discount_percentage": forms.NumberInput(
+                attrs={
+                    "placeholder": "e.g. 10",
+                    "min": "0",
+                    "max": "100",
+                    "step": "0.01",
+                }
+            ),
+
+            "stock": forms.NumberInput(
+                attrs={
+                    "placeholder": "e.g. 10",
+                    "min": "0",
+                }
+            ),
+        }
+
+
+# =========================================================
 # PRODUCT VARIANT INLINE
 # =========================================================
 
 class ProductVariantInline(admin.TabularInline):
+
     model = ProductVariant
+
+    form = ProductVariantAdminForm
+
     extra = 1
 
     fields = (
-        "options",
+        "ram",
+        "storage",
+        "color",
         "price",
-        "discount_percentage", 
+        "discount_percentage",
         "stock",
         "is_active",
     )
@@ -117,6 +179,7 @@ class ProductVariantInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+
     list_display = (
         "name",
         "brand",
@@ -153,6 +216,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
+
     list_display = (
         "product",
         "image_preview",
@@ -172,6 +236,7 @@ class ProductImageAdmin(admin.ModelAdmin):
     )
 
     def image_preview(self, obj):
+
         if obj.image:
             return format_html(
                 '<img src="{}" width="80" height="80" '
@@ -190,6 +255,9 @@ class ProductImageAdmin(admin.ModelAdmin):
 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
+
+    form = ProductVariantAdminForm
+
     list_display = (
         "product",
         "price",
@@ -214,9 +282,12 @@ class ProductVariantAdmin(admin.ModelAdmin):
 
 @admin.register(ProductQuestion)
 class ProductQuestionAdmin(admin.ModelAdmin):
+
     list_display = (
         "product",
         "user",
+        "question",
+        "is_approved",
         "created_at",
     )
 
@@ -227,6 +298,7 @@ class ProductQuestionAdmin(admin.ModelAdmin):
     )
 
     list_filter = (
+        "is_approved",
         "created_at",
     )
 
@@ -237,14 +309,18 @@ class ProductQuestionAdmin(admin.ModelAdmin):
 
 @admin.register(ProductReview)
 class ProductReviewAdmin(admin.ModelAdmin):
+
     list_display = (
         "product",
         "user",
         "rating",
+        "review",
+        "review_status",
         "created_at",
     )
 
     list_filter = (
+        "is_approved",
         "rating",
         "created_at",
     )
@@ -252,5 +328,93 @@ class ProductReviewAdmin(admin.ModelAdmin):
     search_fields = (
         "product__name",
         "user__email",
-        "comment",
+        "review",
+    )
+
+    readonly_fields = (
+        "product",
+        "user",
+        "rating",
+        "review",
+        "created_at",
+        "updated_at",
+    )
+
+    fields = (
+        "product",
+        "user",
+        "rating",
+        "review",
+        "is_approved",
+        "created_at",
+        "updated_at",
+    )
+
+    actions = [
+        "approve_reviews",
+        "reject_reviews",
+    ]
+
+    list_per_page = 25
+
+    @admin.display(description="Status")
+    def review_status(self, obj):
+
+        if obj.is_approved:
+            return format_html(
+                '<span style="color: green; '
+                'font-weight: bold;">Approved</span>'
+            )
+
+        return format_html(
+            '<span style="color: #d97706; '
+            'font-weight: bold;">Pending</span>'
+        )
+
+    @admin.action(description="Approve selected reviews")
+    def approve_reviews(self, request, queryset):
+
+        updated = queryset.update(
+            is_approved=True
+        )
+
+        self.message_user(
+            request,
+            f"{updated} review(s) approved successfully."
+        )
+
+    @admin.action(description="Reject selected reviews")
+    def reject_reviews(self, request, queryset):
+
+        updated = queryset.update(
+            is_approved=False
+        )
+
+        self.message_user(
+            request,
+            f"{updated} review(s) marked as pending."
+        )
+
+
+# =========================================================
+# COLOR
+# =========================================================
+
+@admin.register(Color)
+class ColorAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "name",
+        "hex_code",
+        "is_active",
+        "created_at",
+    )
+
+    list_filter = (
+        "is_active",
+    )
+
+    search_fields = (
+        "name",
+        "hex_code",
     )

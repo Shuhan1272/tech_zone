@@ -1,16 +1,27 @@
-from django_filters.rest_framework import (
-    DjangoFilterBackend
-)
-
-from rest_framework import viewsets,filters
-from rest_framework.permissions import (
-    IsAuthenticated
-)
 
 from decimal import Decimal
-from django.db.models import Min, Q, F, ExpressionWrapper, fields
 
-from .permissions import IsAdminOrReadOnly
+from django.db.models import (
+    Min,
+    Q,
+    F,
+    ExpressionWrapper,
+    fields,
+)
+
+from django_filters.rest_framework import DjangoFilterBackend
+
+from rest_framework import viewsets, filters
+
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+)
+
+from .permissions import (
+    IsAdminOrReadOnly,
+    IsOwnerOrAdminOrReadOnly,
+)
 
 from .models import (
     Category,
@@ -33,7 +44,13 @@ from .serializers import (
     ProductReviewSerializer,
 )
 
-from .filters import ProductFilter,CategoryFilter,BrandFilter
+from .filters import (
+    ProductFilter,
+    CategoryFilter,
+    BrandFilter,
+    ProductCodeSearchFilter,
+)
+
 from .pagination import ProductPagination
 
 
@@ -43,7 +60,11 @@ from .pagination import ProductPagination
 
 class CategoryViewSet(viewsets.ModelViewSet):
 
-    queryset = Category.objects.prefetch_related("brands").filter(parent=None)
+    queryset = (
+        Category.objects
+        .prefetch_related('brands')
+        .filter(parent=None)
+    )
 
     serializer_class = CategorySerializer
 
@@ -60,15 +81,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
 
-
-
 # =========================================================
 # Brand
 # =========================================================
 
 class BrandViewSet(viewsets.ModelViewSet):
 
-    queryset = Brand.objects.prefetch_related('categories')
+    queryset = (
+        Brand.objects
+        .prefetch_related('categories')
+    )
 
     serializer_class = BrandSerializer
 
@@ -77,11 +99,11 @@ class BrandViewSet(viewsets.ModelViewSet):
     ]
 
     filter_backends = [
-            DjangoFilterBackend,
+        DjangoFilterBackend,
     ]
-    
+
     filterset_class = BrandFilter
-    
+
     lookup_field = 'slug'
 
 
@@ -91,15 +113,38 @@ class BrandViewSet(viewsets.ModelViewSet):
 
 class ProductViewSet(viewsets.ModelViewSet):
 
-    queryset = Product.objects.select_related('brand', 'category').prefetch_related('variants').annotate(
-        price=Min(
-            ExpressionWrapper(
-                F('variants__price') - (F('variants__price') * F('variants__discount_percentage') / Decimal('100.0')),
-                output_field=fields.DecimalField()
-            ),
-            filter=Q(variants__is_active=True)
-        ) 
-    ) #adding temporary price column #due to relationship and property in model. 
+    queryset = (
+        Product.objects
+        .select_related(
+            'brand',
+            'category'
+        )
+        .prefetch_related(
+            'variants'
+        )
+        .annotate(
+            price=Min(
+                ExpressionWrapper(
+                    F('variants__price')
+                    -
+                    (
+                        F('variants__price')
+                        *
+                        F('variants__discount_percentage')
+                        /
+                        Decimal('100.0')
+                    ),
+                    output_field=fields.DecimalField(
+                        max_digits=12,
+                        decimal_places=2
+                    )
+                ),
+                filter=Q(
+                    variants__is_active=True
+                )
+            )
+        )
+    )
 
     permission_classes = [
         IsAdminOrReadOnly
@@ -109,7 +154,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     filter_backends = [
         DjangoFilterBackend,
-        filters.SearchFilter,
+        ProductCodeSearchFilter,
         filters.OrderingFilter,
     ]
 
@@ -123,7 +168,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     ordering_fields = [
         'name',
-        'price', 
+        'price',
         'created_at',
     ]
 
@@ -145,9 +190,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 # Product Variant
 # =========================================================
 
-class ProductVariantViewSet(
-    viewsets.ModelViewSet
-):
+class ProductVariantViewSet(viewsets.ModelViewSet):
 
     queryset = ProductVariant.objects.all()
 
@@ -160,16 +203,16 @@ class ProductVariantViewSet(
     pagination_class = ProductPagination
 
 
-
 # =========================================================
 # Product Image
 # =========================================================
 
-class ProductImageViewSet(
-    viewsets.ModelViewSet
-):
+class ProductImageViewSet(viewsets.ModelViewSet):
 
-    queryset = ProductImage.objects.select_related('product')
+    queryset = (
+        ProductImage.objects
+        .select_related('product')
+    )
 
     serializer_class = ProductImageSerializer
 
@@ -190,19 +233,42 @@ class ProductImageViewSet(
 # Product Question
 # =========================================================
 
-class ProductQuestionViewSet(
-    viewsets.ModelViewSet
-):
+class ProductQuestionViewSet(viewsets.ModelViewSet):
 
     serializer_class = ProductQuestionSerializer
 
     permission_classes = [
-        IsAuthenticated
+        IsOwnerOrAdminOrReadOnly
     ]
 
     def get_queryset(self):
 
-        return ProductQuestion.objects.all()
+        queryset = (
+            ProductQuestion.objects
+            .select_related(
+                'product',
+                'user'
+            )
+        )
+
+        user = self.request.user
+
+        if (
+            user.is_authenticated
+            and getattr(user, 'role', None)
+            in ['admin', 'super_admin']
+        ):
+            return queryset
+
+        if user.is_authenticated:
+            return queryset.filter(
+                Q(is_approved=True)
+                | Q(user=user)
+            )
+
+        return queryset.filter(
+            is_approved=True
+        )
 
     def perform_create(self, serializer):
 
@@ -211,26 +277,56 @@ class ProductQuestionViewSet(
         )
 
 
+
 # =========================================================
 # Product Review
 # =========================================================
 
-class ProductReviewViewSet(
-    viewsets.ModelViewSet
-):
+class ProductReviewViewSet(viewsets.ModelViewSet):
 
     serializer_class = ProductReviewSerializer
 
-    permission_classes = [
-        IsAuthenticated
+    filter_backends = [
+        DjangoFilterBackend,
     ]
+
+    filterset_fields = [
+        'product',
+    ]
+
+    def get_permissions(self):
+
+        # Everyone can view approved reviews.
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
+
+        # Login required to submit reviews.
+        elif self.action == 'create':
+            permission_classes = [IsAuthenticated]
+
+        # Only admins can update or delete.
+        else:
+            permission_classes = [IsAdminOrReadOnly]
+
+        return [
+            permission()
+            for permission in permission_classes
+        ]
 
     def get_queryset(self):
 
-        return ProductReview.objects.all()
+        # Only approved reviews are visible
+        # through the API, for all users.
+        return (
+            ProductReview.objects
+            .select_related('product', 'user')
+            .filter(is_approved=True)
+        )
 
     def perform_create(self, serializer):
 
+        # Every new review requires admin approval.
         serializer.save(
-            user=self.request.user
+            user=self.request.user,
+            is_approved=False
         )

@@ -87,12 +87,12 @@ def send_password_reset_otp(user):
 
     send_mail(
 
-        subject='FastKart Password Reset OTP',
+        subject='Tech Password Reset OTP',
 
         message=(
             f'Hello {user.first_name},\n\n'
 
-            f'Your FastKart password reset OTP is:\n\n'
+            f'Your Tech password reset OTP is:\n\n'
 
             f'{otp}\n\n'
 
@@ -102,7 +102,7 @@ def send_password_reset_otp(user):
             'please ignore this email.\n\n'
 
             'Thank you,\n'
-            'FastKart Team'
+            'Tech Team'
         ),
 
         from_email=settings.DEFAULT_FROM_EMAIL,

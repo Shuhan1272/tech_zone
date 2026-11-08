@@ -1,3 +1,4 @@
+
 from rest_framework import serializers
 
 from .models import (
@@ -8,6 +9,7 @@ from .models import (
     ProductImage,
     ProductQuestion,
     ProductReview,
+    Color,
 )
 
 
@@ -17,15 +19,13 @@ from .models import (
 
 class BrandSerializer(serializers.ModelSerializer):
 
-
     class Meta:
-
         model = Brand
 
         fields = [
             'id',
             'name',
-            'description',  
+            'description',
             'slug',
             'is_active',
             'created_at',
@@ -50,6 +50,7 @@ class CategorySerializer(serializers.ModelSerializer):
         many=True,
         read_only=True
     )
+
     sub_categories = serializers.SerializerMethodField()
 
     class Meta:
@@ -88,20 +89,40 @@ class CategorySerializer(serializers.ModelSerializer):
 
         return CategorySerializer(
             sub_categories,
-            many=True
+            many=True,
+            context=self.context
         ).data
+
+
+# =========================================================
+# Color
+# =========================================================
+
+class ColorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Color
+
+        fields = [
+            'id',
+            'name',
+            'hex_code',
+        ]
+
+        read_only_fields = [
+            'id',
+            'name',
+            'hex_code',
+        ]
 
 
 # =========================================================
 # Product Image
 # =========================================================
 
-class ProductImageSerializer(
-    serializers.ModelSerializer
-):
+class ProductImageSerializer(serializers.ModelSerializer):
 
     class Meta:
-
         model = ProductImage
 
         fields = [
@@ -127,24 +148,26 @@ class ProductImageSerializer(
 # Product Variant
 # =========================================================
 
-class ProductVariantSerializer(
-    serializers.ModelSerializer
-):
+class ProductVariantSerializer(serializers.ModelSerializer):
 
+    color = ColorSerializer(
+        read_only=True
+    )
 
     class Meta:
-
         model = ProductVariant
 
         fields = [
             'id',
             'product',
             'sku',
-            'options',
             'price',
+            'ram',
+            'storage',
+            'color',
             'discount_percentage',
             'discounted_price',
-            'saved_price', 
+            'saved_price',
             'stock',
             'is_default',
             'is_active',
@@ -156,7 +179,7 @@ class ProductVariantSerializer(
             'id',
             'sku',
             'discounted_price',
-            'price', 
+            'saved_price',
             'created_at',
             'updated_at',
         ]
@@ -164,7 +187,6 @@ class ProductVariantSerializer(
     def validate_price(self, value):
 
         if value <= 0:
-
             raise serializers.ValidationError(
                 'Price must be greater than 0.'
             )
@@ -174,7 +196,6 @@ class ProductVariantSerializer(
     def validate_discount_percentage(self, value):
 
         if value < 0 or value > 100:
-
             raise serializers.ValidationError(
                 'Discount must be between 0 and 100%.'
             )
@@ -182,41 +203,54 @@ class ProductVariantSerializer(
         return value
 
 
-
 # =========================================================
 # Product List Serializer
 # =========================================================
 
 class ProductListSerializer(serializers.ModelSerializer):
+
     brand = serializers.StringRelatedField()
     category = serializers.StringRelatedField()
+
     default_variant = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
+
         fields = [
-            'id', 'name', 'slug', 'category', 'brand', 
-            'key_feature','specification','colors','is_active', 'is_featured',
+            'id',
+            'name',
+            'slug',
+            'category',
+            'brand',
+            'key_feature',
+            'specification',
+            'is_active',
+            'is_featured',
             'default_variant',
         ]
 
     def get_default_variant(self, obj):
-        # obj.variants.all() is instant because of prefetch_related in the ViewSet
+
         variants = obj.variants.all()
-        
+
         if not variants:
             return None
 
-        # 1. Try to find the active, default variant
         for variant in variants:
             if variant.is_active and variant.is_default:
-                return ProductVariantSerializer(variant, context=self.context).data
-        
-        # 2. Fallback: Just return the first active one if no default exists
+                return ProductVariantSerializer(
+                    variant,
+                    context=self.context
+                ).data
+
         for variant in variants:
             if variant.is_active:
-                return ProductVariantSerializer(variant, context=self.context).data
-                
+                return ProductVariantSerializer(
+                    variant,
+                    context=self.context
+                ).data
+
         return None
 
 
@@ -224,12 +258,9 @@ class ProductListSerializer(serializers.ModelSerializer):
 # Product Detail Serializer
 # =========================================================
 
-class ProductSerializer(
-    serializers.ModelSerializer
-):
+class ProductSerializer(serializers.ModelSerializer):
 
     category = serializers.StringRelatedField()
-
     brand = serializers.StringRelatedField()
 
     variants = ProductVariantSerializer(
@@ -238,7 +269,6 @@ class ProductSerializer(
     )
 
     class Meta:
-
         model = Product
 
         fields = [
@@ -248,6 +278,7 @@ class ProductSerializer(
             'name',
             'slug',
             'description',
+            'key_feature',
             'specification',
             'is_active',
             'is_featured',
@@ -267,7 +298,6 @@ class ProductSerializer(
     def validate_name(self, value):
 
         if not value.strip():
-
             raise serializers.ValidationError(
                 'Product name cannot be empty.'
             )
@@ -279,18 +309,18 @@ class ProductSerializer(
 # Product Question
 # =========================================================
 
-class ProductQuestionSerializer(
-    serializers.ModelSerializer
-):
+class ProductQuestionSerializer(serializers.ModelSerializer):
+
+    user_name = serializers.SerializerMethodField()
 
     class Meta:
-
         model = ProductQuestion
 
         fields = [
             'id',
             'product',
             'user',
+            'user_name',
             'question',
             'answer',
             'is_approved',
@@ -301,31 +331,43 @@ class ProductQuestionSerializer(
         read_only_fields = [
             'id',
             'user',
+            'user_name',
             'answer',
             'is_approved',
             'created_at',
             'updated_at',
         ]
 
+    def get_user_name(self, obj):
+
+        user = obj.user
+
+        full_name = (
+            f"{user.first_name} {user.last_name}"
+        ).strip()
+
+        return full_name or "Customer"
+
 
 # =========================================================
 # Product Review
 # =========================================================
 
-class ProductReviewSerializer(
-    serializers.ModelSerializer
-):
+class ProductReviewSerializer(serializers.ModelSerializer):
+
+    user_name = serializers.SerializerMethodField()
 
     class Meta:
-
         model = ProductReview
 
         fields = [
             'id',
             'product',
             'user',
+            'user_name',
             'rating',
             'review',
+            'is_approved',
             'created_at',
             'updated_at',
         ]
@@ -333,6 +375,36 @@ class ProductReviewSerializer(
         read_only_fields = [
             'id',
             'user',
+            'user_name',
+            'is_approved',
             'created_at',
             'updated_at',
         ]
+
+    def get_user_name(self, obj):
+
+        user = obj.user
+
+        full_name = (
+            f"{user.first_name} {user.last_name}"
+        ).strip()
+
+        return full_name or "Customer"
+
+    def validate_rating(self, value):
+
+        if not 1 <= value <= 5:
+            raise serializers.ValidationError(
+                'Rating must be between 1 and 5.'
+            )
+
+        return value
+
+    def validate_review(self, value):
+
+        if not value.strip():
+            raise serializers.ValidationError(
+                'Review cannot be empty.'
+            )
+
+        return value

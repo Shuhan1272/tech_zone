@@ -1,0 +1,98 @@
+
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<div style="max-width:750px;">
+
+    <h1>{{ title }}</h1>
+
+    <fieldset class="module aligned">
+
+        <h2>Refund information</h2>
+
+        <div style="padding:15px;line-height:2;">
+
+            <p>
+                <strong>Refund ID:</strong>
+                #{{ refund.id }}
+            </p>
+
+            <p>
+                <strong>Order ID:</strong>
+                #{{ refund.payment.order_id }}
+            </p>
+
+            <p>
+                <strong>Amount:</strong>
+                {{ refund.amount }} {{ refund.payment.currency }}
+            </p>
+
+            <p>
+                <strong>Current status:</strong>
+                {{ refund.get_status_display }}
+            </p>
+
+            <p>
+                <strong>Customer reason:</strong>
+                {{ refund.reason }}
+            </p>
+
+        </div>
+
+    </fieldset>
+
+    {% if action_name == "process" %}
+
+        <div style="
+            padding:15px;
+            margin:20px 0;
+            border:1px solid #d97706;
+            border-radius:6px;
+        ">
+            <strong>Important:</strong>
+            This action sends a refund request to SSLCommerz.
+
+            Confirm the payment details and gateway environment
+            before continuing.
+
+            Do not submit this action twice if the gateway
+            response is uncertain.
+        </div>
+
+    {% endif %}
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {% if action_name == "approve" or action_name == "reject" %}
+
+            <div style="margin:20px 0;">
+                {{ form.as_p }}
+            </div>
+
+        {% endif %}
+
+        <div class="submit-row">
+
+            <input
+                type="submit"
+                value="Confirm {{ title }}"
+                class="default"
+            >
+
+            <a
+                href="{{ change_url }}"
+                style="margin-left:15px;"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}
