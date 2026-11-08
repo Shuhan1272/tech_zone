@@ -394,13 +394,13 @@ export function Home() {
                 <Icon name="arrow" size={18} />
               </Link>
 
-              {/* <Link
+              <Link
                 to="/pc-builder"
                 className="btn btn-hero-outline"
               >
                 <Icon name="pc" size={19} />
                 Build your PC
-              </Link> */}
+              </Link>
 
             </div>
 
@@ -681,7 +681,7 @@ export function Home() {
               FIND YOUR NEXT FAVORITE
             </span>
 
-            <h2>Shop by category</h2>
+            <h2>Featured Category</h2>
 
             <p>
               Everything you need, neatly organized.
@@ -692,7 +692,7 @@ export function Home() {
             to="/catalog"
             className="section-link"
           >
-            Browse all categories
+            Browse all products 
             <Icon name="arrow" size={18} />
           </Link>
 

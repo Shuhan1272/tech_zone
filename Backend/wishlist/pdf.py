@@ -218,18 +218,6 @@ def build_wishlist_pdf(items):
                 ),
             ]
 
-            # Variant options
-            if variant.options:
-                for key, value in variant.options.items():
-                    if value:
-                        product_details.append(
-                            Paragraph(
-                                f'{escape(str(key))}: '
-                                f'{escape(str(value))}',
-                                small
-                            )
-                        )
-
             product_details.extend([
                 Spacer(1, 5),
                 Paragraph(
