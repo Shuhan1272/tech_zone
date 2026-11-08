@@ -2,9 +2,9 @@
 import { useEffect, useState } from 'react';
 
 // import showcase from '../assets/tech-showcase.webp';
-import showcase from '../assets/Modern Smart Home Showroom.png';
-import futuristicShowcase from '../assets/Futuristic Blue Tech Showcase-1.png';
-import gamingShowcase from '../assets/Neon Gaming Setup Showcase-2.png';
+import showcase from '../assets/main image.png';
+import futuristicShowcase from '../assets/Modern Smart Home Showroom.png';
+import gamingShowcase from '../assets/Futuristic Blue Tech Showcase-1.png';
 
 import {
   Icon,
