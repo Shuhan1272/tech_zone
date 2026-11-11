@@ -1405,7 +1405,7 @@ export function Checkout() {
 
       if (paymentMethod === 'cod') {
         toast(
-          'Your Cash on Delivery order has been placed.',
+          'Order placed successfully! A confirmation email will be sent to your registered email address.',
           'success'
         );
         return;
@@ -1514,15 +1514,24 @@ export function Checkout() {
             />
           </div>
 
-          <h1>
-            Order #{pendingOrder.orderId}
-            {' '}created
-          </h1>
+          <h1>Order Placed Successfully!</h1>
+
+          <p>
+            Thank you for shopping with TechZone! Your order
+            #{pendingOrder.orderId} has been received successfully.
+          </p>
+
+          <div style={{ maxWidth: 520, width: '100%', margin: '18px auto' }}>
+            <Notice
+              type="success"
+              message="A confirmation email will be sent to your registered email address. Please check your inbox for your order details."
+            />
+          </div>
 
           <p>
             {isCOD
-              ? 'Your Cash on Delivery order has been placed. Payment will be collected when your order is delivered.'
-              : 'Your order has been saved. Online payment is pending until SSLCommerz confirms it.'}
+              ? 'Cash on Delivery selected. Payment will be collected when your order is delivered.'
+              : 'Your order has been received. Online payment is pending until SSLCommerz confirms it.'}
           </p>
 
           {isCOD ? (

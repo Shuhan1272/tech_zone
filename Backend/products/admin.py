@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 
 from django import forms
 from django.contrib import admin
@@ -14,10 +15,10 @@ from .models import (
     ProductReview,
 )
 
-
 # =========================================================
 # CATEGORY
 # =========================================================
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -29,22 +30,17 @@ class CategoryAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "is_active",
-    )
+    list_filter = ("is_active",)
 
-    search_fields = (
-        "name",
-    )
+    search_fields = ("name",)
 
-    prepopulated_fields = {
-        "slug": ("name",)
-    }
+    prepopulated_fields = {"slug": ("name",)}
 
 
 # =========================================================
 # BRAND
 # =========================================================
+
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
@@ -55,22 +51,17 @@ class BrandAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "is_active",
-    )
+    list_filter = ("is_active",)
 
-    search_fields = (
-        "name",
-    )
+    search_fields = ("name",)
 
-    prepopulated_fields = {
-        "slug": ("name",)
-    }
+    prepopulated_fields = {"slug": ("name",)}
 
 
 # =========================================================
 # PRODUCT IMAGE INLINE
 # =========================================================
+
 
 class ProductImageInline(admin.TabularInline):
 
@@ -83,9 +74,7 @@ class ProductImageInline(admin.TabularInline):
         "is_primary",
     )
 
-    readonly_fields = (
-        "image_preview",
-    )
+    readonly_fields = ("image_preview",)
 
     def image_preview(self, obj):
 
@@ -93,7 +82,7 @@ class ProductImageInline(admin.TabularInline):
             return format_html(
                 '<img src="{}" width="80" height="80" '
                 'style="object-fit: cover; border-radius: 6px;" />',
-                obj.image.url
+                obj.image.url,
             )
 
         return "No image"
@@ -104,6 +93,7 @@ class ProductImageInline(admin.TabularInline):
 # =========================================================
 # PRODUCT VARIANT FORM WITH PLACEHOLDERS
 # =========================================================
+
 
 class ProductVariantAdminForm(forms.ModelForm):
 
@@ -117,13 +107,11 @@ class ProductVariantAdminForm(forms.ModelForm):
                     "placeholder": "e.g. 8GB, 16GB, 32GB",
                 }
             ),
-
             "storage": forms.TextInput(
                 attrs={
                     "placeholder": "e.g. 128GB, 256GB, 512GB",
                 }
             ),
-
             "price": forms.NumberInput(
                 attrs={
                     "placeholder": "e.g. 274999",
@@ -131,7 +119,6 @@ class ProductVariantAdminForm(forms.ModelForm):
                     "step": "0.01",
                 }
             ),
-
             "discount_percentage": forms.NumberInput(
                 attrs={
                     "placeholder": "e.g. 10",
@@ -140,7 +127,6 @@ class ProductVariantAdminForm(forms.ModelForm):
                     "step": "0.01",
                 }
             ),
-
             "stock": forms.NumberInput(
                 attrs={
                     "placeholder": "e.g. 10",
@@ -153,6 +139,7 @@ class ProductVariantAdminForm(forms.ModelForm):
 # =========================================================
 # PRODUCT VARIANT INLINE
 # =========================================================
+
 
 class ProductVariantInline(admin.TabularInline):
 
@@ -177,6 +164,7 @@ class ProductVariantInline(admin.TabularInline):
 # PRODUCT
 # =========================================================
 
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
 
@@ -200,9 +188,7 @@ class ProductAdmin(admin.ModelAdmin):
         "category__name",
     )
 
-    prepopulated_fields = {
-        "slug": ("name",)
-    }
+    prepopulated_fields = {"slug": ("name",)}
 
     inlines = (
         ProductImageInline,
@@ -214,6 +200,7 @@ class ProductAdmin(admin.ModelAdmin):
 # PRODUCT IMAGE
 # =========================================================
 
+
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
 
@@ -223,17 +210,11 @@ class ProductImageAdmin(admin.ModelAdmin):
         "is_primary",
     )
 
-    list_filter = (
-        "is_primary",
-    )
+    list_filter = ("is_primary",)
 
-    search_fields = (
-        "product__name",
-    )
+    search_fields = ("product__name",)
 
-    readonly_fields = (
-        "image_preview",
-    )
+    readonly_fields = ("image_preview",)
 
     def image_preview(self, obj):
 
@@ -241,7 +222,7 @@ class ProductImageAdmin(admin.ModelAdmin):
             return format_html(
                 '<img src="{}" width="80" height="80" '
                 'style="object-fit: cover; border-radius: 6px;" />',
-                obj.image.url
+                obj.image.url,
             )
 
         return "No image"
@@ -252,6 +233,7 @@ class ProductImageAdmin(admin.ModelAdmin):
 # =========================================================
 # PRODUCT VARIANT
 # =========================================================
+
 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
@@ -266,9 +248,7 @@ class ProductVariantAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "is_active",
-    )
+    list_filter = ("is_active",)
 
     search_fields = (
         "product__name",
@@ -279,6 +259,7 @@ class ProductVariantAdmin(admin.ModelAdmin):
 # =========================================================
 # PRODUCT QUESTION
 # =========================================================
+
 
 @admin.register(ProductQuestion)
 class ProductQuestionAdmin(admin.ModelAdmin):
@@ -306,6 +287,7 @@ class ProductQuestionAdmin(admin.ModelAdmin):
 # =========================================================
 # PRODUCT REVIEW
 # =========================================================
+
 
 @admin.register(ProductReview)
 class ProductReviewAdmin(admin.ModelAdmin):
@@ -362,43 +344,44 @@ class ProductReviewAdmin(admin.ModelAdmin):
 
         if obj.is_approved:
             return format_html(
-                '<span style="color: green; '
-                'font-weight: bold;">Approved</span>'
+                '<span style="color: green; ' 'font-weight: bold;">Approved</span>'
             )
 
         return format_html(
-            '<span style="color: #d97706; '
-            'font-weight: bold;">Pending</span>'
+            '<span style="color: #d97706; ' 'font-weight: bold;">Pending</span>'
         )
 
-    @admin.action(description="Approve selected reviews")
+    @admin.action(permissions=["change"], description="Approve selected reviews")
     def approve_reviews(self, request, queryset):
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
-        updated = queryset.update(
-            is_approved=True
-        )
+        updated = queryset.update(is_approved=True)
 
-        self.message_user(
-            request,
-            f"{updated} review(s) approved successfully."
-        )
+        self.message_user(request, f"{updated} review(s) approved successfully.")
 
-    @admin.action(description="Reject selected reviews")
+    @admin.action(permissions=["change"], description="Reject selected reviews")
     def reject_reviews(self, request, queryset):
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
-        updated = queryset.update(
-            is_approved=False
-        )
+        updated = queryset.update(is_approved=False)
 
-        self.message_user(
-            request,
-            f"{updated} review(s) marked as pending."
-        )
+        self.message_user(request, f"{updated} review(s) marked as pending.")
 
 
 # =========================================================
 # COLOR
 # =========================================================
+
 
 @admin.register(Color)
 class ColorAdmin(admin.ModelAdmin):
@@ -410,9 +393,7 @@ class ColorAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "is_active",
-    )
+    list_filter = ("is_active",)
 
     search_fields = (
         "name",

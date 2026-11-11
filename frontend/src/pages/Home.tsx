@@ -1,7 +1,5 @@
-
 import { useEffect, useState } from 'react';
 
-// import showcase from '../assets/tech-showcase.webp';
 import showcase from '../assets/main image.png';
 import futuristicShowcase from '../assets/Modern Smart Home Showroom.png';
 import gamingShowcase from '../assets/Futuristic Blue Tech Showcase-1.png';
@@ -47,6 +45,7 @@ const heroImages = [
 
 const SLIDE_INTERVAL = 3500;
 const NOTICE_SCROLL_SECONDS = 25;
+const MAX_FEATURED_CATEGORIES = 10;
 
 // ============================================================
 // NOTICE TYPES
@@ -72,6 +71,15 @@ type NoticeResponse =
       next?: string | null;
       results: Notice[];
     };
+
+// ============================================================
+// CATEGORY TYPES
+// ============================================================
+
+type FeaturedCategory = Category & {
+  is_featured?: boolean;
+  is_active?: boolean;
+};
 
 // ============================================================
 // CATEGORY ICONS
@@ -277,6 +285,26 @@ export function Home() {
   );
 
   // ==========================================================
+  // FEATURED CATEGORIES
+  //
+  // Rules:
+  // 1. Only is_featured === true
+  // 2. Only active categories
+  // 3. Maximum 10 categories
+  // 4. No fallback to non-featured categories
+  // ==========================================================
+
+  const featuredCategories = (
+    categories.data as FeaturedCategory[]
+  )
+    .filter(
+      (category) =>
+        category.is_featured === true &&
+        category.is_active !== false
+    )
+    .slice(0, MAX_FEATURED_CATEGORIES);
+
+  // ==========================================================
   // FEATURED PRODUCTS
   // ==========================================================
 
@@ -364,8 +392,6 @@ export function Home() {
 
         <div className="container-wide hero-inner">
 
-          {/* LEFT CONTENT */}
-
           <div className="hero-content">
 
             <div className="hero-pill">
@@ -425,9 +451,7 @@ export function Home() {
 
           </div>
 
-          {/* ==================================================
-              RIGHT IMAGE SLIDER
-          ================================================== */}
+          {/* HERO IMAGE SLIDER */}
 
           <div className="hero-art techzone-hero-art">
 
@@ -669,7 +693,7 @@ export function Home() {
       </section>
 
       {/* ======================================================
-          CATEGORIES
+          FEATURED CATEGORIES
       ====================================================== */}
 
       <section className="section container-wide">
@@ -692,7 +716,7 @@ export function Home() {
             to="/catalog"
             className="section-link"
           >
-            Browse all products 
+            Browse all products
             <Icon name="arrow" size={18} />
           </Link>
 
@@ -700,53 +724,50 @@ export function Home() {
 
         {categories.loading ? (
 
-          <Spinner label="Loading categories..." />
+          <Spinner label="Loading featured categories..." />
 
-        ) : categories.data.length ? (
+        ) : featuredCategories.length > 0 ? (
 
           <div className="category-grid">
 
-            {categories.data
-              .slice(0, 10)
-              .map((category, index) => (
+            {featuredCategories.map((category, index) => (
 
-                <Link
-                  key={category.id}
-                  to={`/catalog?category=${encodeURIComponent(
-                    category.slug
-                  )}`}
-                  className={`category-tile category-color-${
-                    index % 5
-                  }`}
-                >
+              <Link
+                key={category.id}
+                to={`/catalog?category=${encodeURIComponent(
+                  category.slug
+                )}`}
+                className={`category-tile category-color-${
+                  index % 5
+                }`}
+              >
 
-                  <span className="category-tile-icon">
-                    <Icon
-                      name={categoryIcon(category.name)}
-                      size={32}
-                    />
-                  </span>
+                <span className="category-tile-icon">
+                  <Icon
+                    name={categoryIcon(category.name)}
+                    size={32}
+                  />
+                </span>
 
-                  <strong>
-                    {category.name}
-                  </strong>
+                <strong>
+                  {category.name}
+                </strong>
 
-                  <small>
-                    Explore collection
-                    <Icon name="arrow" size={14} />
-                  </small>
+                <small>
+                  Explore collection
+                  <Icon name="arrow" size={14} />
+                </small>
 
-                </Link>
+              </Link>
 
-              ))}
+            ))}
 
           </div>
 
         ) : (
 
           <div className="section-placeholder">
-            Categories will appear here once they're
-            added in Django Admin.
+            No featured categories available at the moment.
           </div>
 
         )}
@@ -934,7 +955,6 @@ export function Home() {
 
         /* ================================================
            HERO IMAGE SLIDER
-           Fixed size, centered, no cropping
         ================================================ */
 
         .techzone-hero-art {
@@ -949,22 +969,16 @@ export function Home() {
 
         .techzone-hero-image-frame {
           position: relative;
-
           width: 100%;
           max-width: 590px;
-
           height: auto;
           min-height: 0;
           aspect-ratio: 16 / 9;
-
           flex: 0 1 590px;
-
           border-radius: 16px;
           overflow: hidden;
           isolation: isolate;
-
           background: transparent;
-
           box-shadow:
             0 10px 28px rgba(0, 0, 0, 0.12);
         }
@@ -972,26 +986,20 @@ export function Home() {
         .techzone-hero-slide {
           position: absolute;
           inset: 0;
-
           display: block;
           width: 100%;
           height: 100%;
-
           border-radius: 16px;
           overflow: hidden;
-
           transition: opacity 650ms ease-in-out;
         }
 
         .techzone-hero-image {
           display: block;
-
           width: 100%;
           height: 100%;
-
           object-fit: contain;
           object-position: center;
-
           border-radius: 16px;
         }
 
@@ -1000,22 +1008,16 @@ export function Home() {
           bottom: 14px;
           right: 14px;
           z-index: 5;
-
           display: flex;
           align-items: center;
           gap: 7px;
-
           padding: 9px 13px;
           border-radius: 9px;
-
           background: rgba(255, 255, 255, 0.96);
           color: #1d4ed8;
-
           font-size: 12px;
           font-weight: 700;
-
           pointer-events: none;
-
           box-shadow:
             0 4px 16px rgba(0, 0, 0, 0.12);
         }

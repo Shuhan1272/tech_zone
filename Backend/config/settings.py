@@ -1,4 +1,3 @@
-
 """
 Django settings for TechZone.
 Django version: 5.2.6
@@ -8,7 +7,6 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 import os
-
 
 # =========================================================
 # BASE DIRECTORY AND ENVIRONMENT
@@ -29,18 +27,13 @@ DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv(
-        "ALLOWED_HOSTS",
-        "localhost,127.0.0.1"
-    ).split(",")
+    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if host.strip()
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
-    for origin in os.getenv(
-        "CSRF_TRUSTED_ORIGINS", ""
-    ).split(",")
+    for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
     if origin.strip()
 ]
 
@@ -56,6 +49,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # INSTALLED APPLICATIONS
 # =========================================================
 
+
 INSTALLED_APPS = [
     # Django apps
     "django.contrib.admin",
@@ -64,23 +58,22 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     # Third-party apps
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "django_filters",
-
     # TechZone apps
     "accounts",
     "products",
     "core",
     "cart",
-    "order",
+    "order.apps.OrderConfig",
     "discounts",
     "payments",
     "wishlist",
     "pc_builder",
+    "admin_panel",
 ]
 
 
@@ -154,22 +147,13 @@ AUTH_PASSWORD_VALIDATORS = [
         ),
     },
     {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "MinimumLengthValidator"
-        ),
+        "NAME": ("django.contrib.auth.password_validation." "MinimumLengthValidator"),
     },
     {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "CommonPasswordValidator"
-        ),
+        "NAME": ("django.contrib.auth.password_validation." "CommonPasswordValidator"),
     },
     {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "NumericPasswordValidator"
-        ),
+        "NAME": ("django.contrib.auth.password_validation." "NumericPasswordValidator"),
     },
 ]
 
@@ -178,9 +162,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # INTERNATIONALIZATION
 # =========================================================
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'Asia/Dhaka'
+TIME_ZONE = "Asia/Dhaka"
 
 USE_I18N = True
 
@@ -211,24 +195,19 @@ AUTH_USER_MODEL = "accounts.User"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication."
-        "JWTAuthentication",
+        "rest_framework_simplejwt.authentication." "JWTAuthentication",
     ),
-
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions."
-        "IsAuthenticatedOrReadOnly",
+        "rest_framework.permissions." "IsAuthenticatedOrReadOnly",
     ),
-
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-
     "DEFAULT_THROTTLE_RATES": {
-        "register": "100/hour",
-        "login": "100/hour",
+        "register": "10/hour",
+        "login": "10/hour",
     },
 }
 
@@ -238,12 +217,12 @@ REST_FRAMEWORK = {
 # =========================================================
 
 SIMPLE_JWT = {
+    # Password changes revoke previously issued access tokens immediately.
+    "CHECK_REVOKE_TOKEN": True,
     "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
@@ -252,16 +231,11 @@ SIMPLE_JWT = {
 # CORS CONFIGURATION
 # =========================================================
 
-CORS_ALLOW_ALL_ORIGINS = os.getenv(
-    "CORS_ALLOW_ALL_ORIGINS", "False"
-).lower() == "true"
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() == "true"
 
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
-    for origin in os.getenv(
-        "CORS_ALLOWED_ORIGINS",
-        "http://localhost:3000"
-    ).split(",")
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
     if origin.strip()
 ]
 
@@ -270,65 +244,42 @@ CORS_ALLOWED_ORIGINS = [
 # EMAIL CONFIGURATION
 # =========================================================
 
-EMAIL_HOST = os.getenv(
-    "EMAIL_HOST", "smtp.gmail.com"
-)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 
-EMAIL_PORT = int(
-    os.getenv("EMAIL_PORT", "587")
-)
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = os.getenv(
-    "EMAIL_HOST_USER", ""
-).strip()
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "").strip()
 
-EMAIL_HOST_PASSWORD = os.getenv(
-    "EMAIL_HOST_PASSWORD", ""
-).replace(" ", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").replace(" ", "")
 
 DEFAULT_FROM_EMAIL = (
-    os.getenv("DEFAULT_FROM_EMAIL")
-    or EMAIL_HOST_USER
-    or "no-reply@techzone.local"
+    os.getenv("DEFAULT_FROM_EMAIL") or EMAIL_HOST_USER or "no-reply@techzone.local"
 )
 
 EMAIL_TIMEOUT = 20
 
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
-    EMAIL_BACKEND = (
-        "django.core.mail.backends.smtp.EmailBackend"
-    )
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:
-    EMAIL_BACKEND = (
-        "django.core.mail.backends.console.EmailBackend"
-    )
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
 # =========================================================
 # SSLCOMMERZ PAYMENT CONFIGURATION
 # =========================================================
 
-SSLCOMMERZ_STORE_ID = os.getenv(
-    "SSLCOMMERZ_STORE_ID", ""
-).strip()
+SSLCOMMERZ_STORE_ID = os.getenv("SSLCOMMERZ_STORE_ID", "").strip()
 
-SSLCOMMERZ_STORE_PASSWORD = os.getenv(
-    "SSLCOMMERZ_STORE_PASSWORD", ""
-).strip()
+SSLCOMMERZ_STORE_PASSWORD = os.getenv("SSLCOMMERZ_STORE_PASSWORD", "").strip()
 
-SSLCOMMERZ_SANDBOX = os.getenv(
-    "SSLCOMMERZ_SANDBOX", "True"
-).lower() == "true"
+SSLCOMMERZ_SANDBOX = os.getenv("SSLCOMMERZ_SANDBOX", "True").lower() == "true"
 
-SSLCOMMERZ_BACKEND_URL = os.getenv(
-    "SSLCOMMERZ_BACKEND_URL", ""
-).rstrip("/")
+SSLCOMMERZ_BACKEND_URL = os.getenv("SSLCOMMERZ_BACKEND_URL", "").rstrip("/")
 
 SSLCOMMERZ_FRONTEND_URL = os.getenv(
-    "SSLCOMMERZ_FRONTEND_URL",
-    "http://localhost:3000"
+    "SSLCOMMERZ_FRONTEND_URL", "http://localhost:3000"
 ).rstrip("/")
 
 
@@ -336,7 +287,4 @@ SSLCOMMERZ_FRONTEND_URL = os.getenv(
 # FRONTEND CONFIGURATION
 # =========================================================
 
-FRONTEND_URL = os.getenv(
-    "FRONTEND_URL",
-    SSLCOMMERZ_FRONTEND_URL
-).rstrip("/")
+FRONTEND_URL = os.getenv("FRONTEND_URL", SSLCOMMERZ_FRONTEND_URL).rstrip("/")

@@ -1,11 +1,10 @@
-
 from django.contrib import admin, messages
 from django import forms
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import path, reverse
 from django.utils.html import format_html
-from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Payment, PaymentRefund
 from .services import (
@@ -19,22 +18,22 @@ from .services import (
     check_gateway_refund,
 )
 
-
 # =========================================================
 # REFUND REVIEW FORM
 # =========================================================
 
+
 class RefundReviewForm(forms.Form):
 
     note = forms.CharField(
-        label='Administrator note',
+        label="Administrator note",
         required=False,
         max_length=2000,
         widget=forms.Textarea(
             attrs={
-                'rows': 4,
-                'style': 'width:100%;max-width:650px;',
-                'placeholder': 'Enter a review note...',
+                "rows": 4,
+                "style": "width:100%;max-width:650px;",
+                "placeholder": "Enter a review note...",
             }
         ),
     )
@@ -43,14 +42,14 @@ class RefundReviewForm(forms.Form):
 class RefundRejectForm(forms.Form):
 
     note = forms.CharField(
-        label='Reason for rejection',
+        label="Reason for rejection",
         required=True,
         max_length=2000,
         widget=forms.Textarea(
             attrs={
-                'rows': 4,
-                'style': 'width:100%;max-width:650px;',
-                'placeholder': 'Explain why the refund is rejected...',
+                "rows": 4,
+                "style": "width:100%;max-width:650px;",
+                "placeholder": "Explain why the refund is rejected...",
             }
         ),
     )
@@ -60,56 +59,57 @@ class RefundRejectForm(forms.Form):
 # PAYMENT ADMIN
 # =========================================================
 
+
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
 
     list_display = [
-        'id',
-        'order',
-        'transaction_id',
-        'amount',
-        'currency',
-        'payment_status_display',
-        'payment_method',
-        'risk_level',
-        'created_at',
+        "id",
+        "order",
+        "transaction_id",
+        "amount",
+        "currency",
+        "payment_status_display",
+        "payment_method",
+        "risk_level",
+        "created_at",
     ]
 
     list_filter = [
-        'status',
-        'currency',
-        'created_at',
+        "status",
+        "currency",
+        "created_at",
     ]
 
     search_fields = [
-        'transaction_id',
-        'bank_transaction_id',
-        'order__user__email',
+        "transaction_id",
+        "bank_transaction_id",
+        "order__user__email",
     ]
 
-    ordering = ['-created_at']
+    ordering = ["-created_at"]
 
     readonly_fields = [
-        'order',
-        'transaction_id',
-        'amount',
-        'currency',
-        'status',
-        'gateway_session_key',
-        'gateway_url',
-        'validation_id',
-        'bank_transaction_id',
-        'payment_method',
-        'risk_level',
-        'review_reason',
-        'created_at',
-        'updated_at',
+        "order",
+        "transaction_id",
+        "amount",
+        "currency",
+        "status",
+        "gateway_session_key",
+        "gateway_url",
+        "validation_id",
+        "bank_transaction_id",
+        "payment_method",
+        "risk_level",
+        "review_reason",
+        "created_at",
+        "updated_at",
     ]
 
     actions = [
-        'verify_payments',
-        'approve_payments',
-        'request_refund',
+        "verify_payments",
+        "approve_payments",
+        "request_refund",
     ]
 
     list_per_page = 25
@@ -120,29 +120,36 @@ class PaymentAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    @admin.display(description='Status')
+    @admin.display(description="Status")
     def payment_status_display(self, obj):
 
         colors = {
-            'initiating': '#64748b',
-            'pending': '#d97706',
-            'paid': '#16a34a',
-            'review': '#9333ea',
-            'failed': '#dc2626',
-            'cancelled': '#64748b',
-            'refunded': '#0891b2',
+            "initiating": "#64748b",
+            "pending": "#d97706",
+            "paid": "#16a34a",
+            "review": "#9333ea",
+            "failed": "#dc2626",
+            "cancelled": "#64748b",
+            "refunded": "#0891b2",
         }
 
         return format_html(
             '<span style="color:{};font-weight:600;">{}</span>',
-            colors.get(obj.status, '#64748b'),
+            colors.get(obj.status, "#64748b"),
             obj.get_status_display(),
         )
 
     @admin.action(
-        description='Verify selected payments with SSLCommerz'
+        permissions=["change"], description="Verify selected payments with SSLCommerz"
     )
     def verify_payments(self, request, queryset):
+
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
         checked = 0
         failed = 0
@@ -158,21 +165,26 @@ class PaymentAdmin(admin.ModelAdmin):
 
         self.message_user(
             request,
-            f'{checked} checked, {failed} failed.',
+            f"{checked} checked, {failed} failed.",
             messages.WARNING if failed else messages.SUCCESS,
         )
 
     @admin.action(
-        description='Approve selected risk-reviewed payments'
+        permissions=["change"], description="Approve selected risk-reviewed payments"
     )
     def approve_payments(self, request, queryset):
+
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
         approved = 0
         skipped = 0
 
-        for payment_id in queryset.values_list(
-            'pk', flat=True
-        ):
+        for payment_id in queryset.values_list("pk", flat=True):
 
             try:
                 approve_reviewed_payment(payment_id)
@@ -183,20 +195,28 @@ class PaymentAdmin(admin.ModelAdmin):
 
         self.message_user(
             request,
-            f'{approved} approved, {skipped} skipped.',
+            f"{approved} approved, {skipped} skipped.",
             messages.WARNING if skipped else messages.SUCCESS,
         )
 
     @admin.action(
-        description='Create refund request for ONE selected payment'
+        permissions=["change"],
+        description="Create refund request for ONE selected payment",
     )
     def request_refund(self, request, queryset):
+
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
         if queryset.count() != 1:
 
             self.message_user(
                 request,
-                'Select exactly one payment.',
+                "Select exactly one payment.",
                 messages.ERROR,
             )
             return
@@ -207,15 +227,14 @@ class PaymentAdmin(admin.ModelAdmin):
             refund = request_full_refund(
                 payment_id=payment.pk,
                 reason=(
-                    f'Refund requested by Django Admin '
-                    f'user #{request.user.pk}'
+                    f"Refund requested by Django Admin " f"user #{request.user.pk}"
                 ),
                 user=None,
             )
 
             self.message_user(
                 request,
-                f'Refund #{refund.pk} created successfully.',
+                f"Refund #{refund.pk} created successfully.",
                 messages.SUCCESS,
             )
 
@@ -231,111 +250,112 @@ class PaymentAdmin(admin.ModelAdmin):
 # PAYMENT REFUND ADMIN
 # =========================================================
 
+
 @admin.register(PaymentRefund)
 class PaymentRefundAdmin(admin.ModelAdmin):
 
     list_display = [
-        'id',
-        'payment',
-        'order_id_display',
-        'amount',
-        'refund_status_display',
-        'reviewed_by',
-        'refund_reference_id',
-        'refund_actions',
-        'created_at',
+        "id",
+        "payment",
+        "order_id_display",
+        "amount",
+        "refund_status_display",
+        "reviewed_by",
+        "refund_reference_id",
+        "refund_actions",
+        "created_at",
     ]
 
     list_filter = [
-        'status',
-        'created_at',
-        'reviewed_at',
-        'completed_at',
+        "status",
+        "created_at",
+        "reviewed_at",
+        "completed_at",
     ]
 
     search_fields = [
-        'payment__transaction_id',
-        'payment__bank_transaction_id',
-        'payment__order__user__email',
-        'refund_reference_id',
+        "payment__transaction_id",
+        "payment__bank_transaction_id",
+        "payment__order__user__email",
+        "refund_reference_id",
     ]
 
-    ordering = ['-created_at']
+    ordering = ["-created_at"]
 
     readonly_fields = [
-        'payment',
-        'amount',
-        'reason',
-        'refund_reference_id',
-        'status',
-        'reviewed_by',
-        'reviewed_at',
-        'admin_note',
-        'processing_started_at',
-        'completed_at',
-        'failure_reason',
-        'created_at',
-        'updated_at',
-        'refund_action_buttons',
+        "payment",
+        "amount",
+        "reason",
+        "refund_reference_id",
+        "status",
+        "reviewed_by",
+        "reviewed_at",
+        "admin_note",
+        "processing_started_at",
+        "completed_at",
+        "failure_reason",
+        "created_at",
+        "updated_at",
+        "refund_action_buttons",
     ]
 
     fieldsets = [
         (
-            'Refund Information',
+            "Refund Information",
             {
-                'fields': [
-                    'payment',
-                    'amount',
-                    'reason',
-                    'status',
-                    'refund_reference_id',
+                "fields": [
+                    "payment",
+                    "amount",
+                    "reason",
+                    "status",
+                    "refund_reference_id",
                 ]
             },
         ),
         (
-            'Admin Review',
+            "Admin Review",
             {
-                'fields': [
-                    'reviewed_by',
-                    'reviewed_at',
-                    'admin_note',
+                "fields": [
+                    "reviewed_by",
+                    "reviewed_at",
+                    "admin_note",
                 ]
             },
         ),
         (
-            'Gateway Processing',
+            "Gateway Processing",
             {
-                'fields': [
-                    'processing_started_at',
-                    'completed_at',
-                    'failure_reason',
+                "fields": [
+                    "processing_started_at",
+                    "completed_at",
+                    "failure_reason",
                 ]
             },
         ),
         (
-            'Refund Management',
+            "Refund Management",
             {
-                'fields': [
-                    'refund_action_buttons',
+                "fields": [
+                    "refund_action_buttons",
                 ]
             },
         ),
         (
-            'Timestamps',
+            "Timestamps",
             {
-                'fields': [
-                    'created_at',
-                    'updated_at',
+                "fields": [
+                    "created_at",
+                    "updated_at",
                 ]
             },
         ),
     ]
 
     actions = [
-        'approve_refunds',
-        'reject_refunds',
-        'process_refunds',
-        'check_refunds',
+        "approve_refunds",
+        "reject_refunds",
+        "process_refunds",
+        "check_refunds",
     ]
 
     list_per_page = 25
@@ -347,10 +367,14 @@ class PaymentRefundAdmin(admin.ModelAdmin):
         return False
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            'payment',
-            'payment__order',
-            'reviewed_by',
+        return (
+            super()
+            .get_queryset(request)
+            .select_related(
+                "payment",
+                "payment__order",
+                "reviewed_by",
+            )
         )
 
     # =====================================================
@@ -361,11 +385,9 @@ class PaymentRefundAdmin(admin.ModelAdmin):
 
         custom_urls = [
             path(
-                '<int:refund_id>/manage/<str:action>/',
-                self.admin_site.admin_view(
-                    self.manage_refund_view
-                ),
-                name='payments_paymentrefund_manage',
+                "<int:refund_id>/manage/<str:action>/",
+                self.admin_site.admin_view(self.manage_refund_view),
+                name="payments_paymentrefund_manage",
             ),
         ]
 
@@ -382,7 +404,11 @@ class PaymentRefundAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
-        return request.user.is_staff
+        return bool(
+            request.user.is_active
+            and request.user.is_staff
+            and super().has_change_permission(request, obj)
+        )
 
     def _can_manage(self, request, refund):
 
@@ -399,26 +425,26 @@ class PaymentRefundAdmin(admin.ModelAdmin):
     # STATUS DISPLAY
     # =====================================================
 
-    @admin.display(description='Order ID')
+    @admin.display(description="Order ID")
     def order_id_display(self, obj):
         return obj.payment.order_id
 
-    @admin.display(description='Refund Status')
+    @admin.display(description="Refund Status")
     def refund_status_display(self, obj):
 
         colors = {
-            'requested': '#d97706',
-            'approved': '#2563eb',
-            'rejected': '#dc2626',
-            'initiating': '#9333ea',
-            'processing': '#0891b2',
-            'refunded': '#16a34a',
-            'failed': '#dc2626',
+            "requested": "#d97706",
+            "approved": "#2563eb",
+            "rejected": "#dc2626",
+            "initiating": "#9333ea",
+            "processing": "#0891b2",
+            "refunded": "#16a34a",
+            "failed": "#dc2626",
         }
 
         return format_html(
             '<span style="color:{};font-weight:600;">{}</span>',
-            colors.get(obj.status, '#64748b'),
+            colors.get(obj.status, "#64748b"),
             obj.get_status_display(),
         )
 
@@ -429,7 +455,7 @@ class PaymentRefundAdmin(admin.ModelAdmin):
     def _action_url(self, refund, action):
 
         return reverse(
-            'admin:payments_paymentrefund_manage',
+            "admin:payments_paymentrefund_manage",
             args=[refund.pk, action],
         )
 
@@ -437,16 +463,16 @@ class PaymentRefundAdmin(admin.ModelAdmin):
 
         return format_html(
             '<a href="{}" style="'
-            'display:inline-block;'
-            'padding:7px 12px;'
-            'margin:3px;'
-            'border-radius:5px;'
-            'background:{};'
-            'color:white;'
-            'text-decoration:none;'
-            'font-weight:600;'
-            'font-size:12px;'
-            'white-space:nowrap;'
+            "display:inline-block;"
+            "padding:7px 12px;"
+            "margin:3px;"
+            "border-radius:5px;"
+            "background:{};"
+            "color:white;"
+            "text-decoration:none;"
+            "font-weight:600;"
+            "font-size:12px;"
+            "white-space:nowrap;"
             '">{}</a>',
             self._action_url(refund, action),
             color,
@@ -457,57 +483,57 @@ class PaymentRefundAdmin(admin.ModelAdmin):
 
         buttons = []
 
-        if refund.status == 'requested':
+        if refund.status == "requested":
 
             buttons.append(
                 self._button(
                     refund,
-                    'approve',
-                    'Approve',
-                    '#16a34a',
+                    "approve",
+                    "Approve",
+                    "#16a34a",
                 )
             )
 
             buttons.append(
                 self._button(
                     refund,
-                    'reject',
-                    'Reject',
-                    '#dc2626',
+                    "reject",
+                    "Reject",
+                    "#dc2626",
                 )
             )
 
-        elif refund.status == 'approved':
+        elif refund.status == "approved":
 
             buttons.append(
                 self._button(
                     refund,
-                    'process',
-                    'Process Refund',
-                    '#2563eb',
+                    "process",
+                    "Process Refund",
+                    "#2563eb",
                 )
             )
 
             buttons.append(
                 self._button(
                     refund,
-                    'reject',
-                    'Reject',
-                    '#dc2626',
+                    "reject",
+                    "Reject",
+                    "#dc2626",
                 )
             )
 
         elif refund.status in [
-            'initiating',
-            'processing',
+            "initiating",
+            "processing",
         ]:
 
             buttons.append(
                 self._button(
                     refund,
-                    'check',
-                    'Check Status',
-                    '#0891b2',
+                    "check",
+                    "Check Status",
+                    "#0891b2",
                 )
             )
 
@@ -517,23 +543,23 @@ class PaymentRefundAdmin(admin.ModelAdmin):
             )
 
         return format_html(
-            '{}',
+            "{}",
             format_html(
-                '{}',
+                "{}",
                 *buttons,
             ),
         )
 
-    @admin.display(description='Actions')
+    @admin.display(description="Actions")
     def refund_actions(self, obj):
 
         return self._buttons_html(obj)
 
-    @admin.display(description='Refund Actions')
+    @admin.display(description="Refund Actions")
     def refund_action_buttons(self, obj):
 
         if not obj or not obj.pk:
-            return 'Save the refund first.'
+            return "Save the refund first."
 
         return self._buttons_html(obj)
 
@@ -548,12 +574,10 @@ class PaymentRefundAdmin(admin.ModelAdmin):
         action,
     ):
 
-        from django.core.exceptions import PermissionDenied
-
         refund = get_object_or_404(
             PaymentRefund.objects.select_related(
-                'payment',
-                'payment__order',
+                "payment",
+                "payment__order",
             ),
             pk=refund_id,
         )
@@ -562,53 +586,48 @@ class PaymentRefundAdmin(admin.ModelAdmin):
             raise PermissionDenied
 
         allowed_actions = {
-            'approve': ['requested'],
-            'reject': ['requested', 'approved'],
-            'process': ['approved'],
-            'check': ['initiating', 'processing'],
+            "approve": ["requested"],
+            "reject": ["requested", "approved"],
+            "process": ["approved"],
+            "check": ["initiating", "processing"],
         }
 
         change_url = reverse(
-            'admin:payments_paymentrefund_change',
+            "admin:payments_paymentrefund_change",
             args=[refund.pk],
         )
 
-        if (
-            action not in allowed_actions
-            or refund.status not in allowed_actions.get(
-                action, []
-            )
+        if action not in allowed_actions or refund.status not in allowed_actions.get(
+            action, []
         ):
             self.message_user(
                 request,
-                'This action is not available for the current refund status.',
+                "This action is not available for the current refund status.",
                 messages.ERROR,
             )
             return HttpResponseRedirect(change_url)
 
         action_titles = {
-            'approve': 'Approve Refund Request',
-            'reject': 'Reject Refund Request',
-            'process': 'Process Refund Through SSLCommerz',
-            'check': 'Check Refund Status',
+            "approve": "Approve Refund Request",
+            "reject": "Reject Refund Request",
+            "process": "Process Refund Through SSLCommerz",
+            "check": "Check Refund Status",
         }
 
-        if action == 'reject':
+        if action == "reject":
             form_class = RefundRejectForm
         else:
             form_class = RefundReviewForm
 
-        form = form_class(
-            request.POST if request.method == 'POST' else None
-        )
+        form = form_class(request.POST if request.method == "POST" else None)
 
-        if request.method == 'POST' and form.is_valid():
+        if request.method == "POST" and form.is_valid():
 
-            note = form.cleaned_data.get('note', '')
+            note = form.cleaned_data.get("note", "")
 
             try:
 
-                if action == 'approve':
+                if action == "approve":
 
                     approve_refund_request(
                         refund_id=refund.pk,
@@ -616,11 +635,9 @@ class PaymentRefundAdmin(admin.ModelAdmin):
                         note=note,
                     )
 
-                    success_message = (
-                        f'Refund #{refund.pk} approved successfully.'
-                    )
+                    success_message = f"Refund #{refund.pk} approved successfully."
 
-                elif action == 'reject':
+                elif action == "reject":
 
                     reject_refund_request(
                         refund_id=refund.pk,
@@ -628,11 +645,9 @@ class PaymentRefundAdmin(admin.ModelAdmin):
                         note=note,
                     )
 
-                    success_message = (
-                        f'Refund #{refund.pk} rejected.'
-                    )
+                    success_message = f"Refund #{refund.pk} rejected."
 
-                elif action == 'process':
+                elif action == "process":
 
                     updated_refund = process_approved_refund(
                         refund_id=refund.pk,
@@ -640,20 +655,16 @@ class PaymentRefundAdmin(admin.ModelAdmin):
                     )
 
                     success_message = (
-                        f'Refund #{refund.pk} processing result: '
-                        f'{updated_refund.status}. '
-                        'Verify the gateway result before cancellation.'
+                        f"Refund #{refund.pk} processing result: "
+                        f"{updated_refund.status}. "
+                        "Verify the gateway result before cancellation."
                     )
 
-                elif action == 'check':
+                elif action == "check":
 
-                    updated_refund = check_gateway_refund(
-                        refund
-                    )
+                    updated_refund = check_gateway_refund(refund)
 
-                    success_message = (
-                        f'Refund #{refund.pk} checked with SSLCommerz.'
-                    )
+                    success_message = f"Refund #{refund.pk} checked with SSLCommerz."
 
                 self.message_user(
                     request,
@@ -673,23 +684,23 @@ class PaymentRefundAdmin(admin.ModelAdmin):
 
         context = {
             **self.admin_site.each_context(request),
-            'title': action_titles[action],
-            'opts': self.model._meta,
-            'original': refund,
-            'refund': refund,
-            'action_name': action,
-            'form': form,
-            'change_url': change_url,
-            'is_popup': False,
-            'has_view_permission': True,
-            'has_change_permission': True,
-            'has_add_permission': False,
-            'has_delete_permission': False,
+            "title": action_titles[action],
+            "opts": self.model._meta,
+            "original": refund,
+            "refund": refund,
+            "action_name": action,
+            "form": form,
+            "change_url": change_url,
+            "is_popup": False,
+            "has_view_permission": True,
+            "has_change_permission": True,
+            "has_add_permission": False,
+            "has_delete_permission": False,
         }
 
         return render(
             request,
-            'admin/payments/refund_action.html',
+            "admin/payments/refund_action.html",
             context,
         )
 
@@ -698,15 +709,22 @@ class PaymentRefundAdmin(admin.ModelAdmin):
     # =====================================================
 
     @admin.action(
-        description='Approve selected refund requests'
+        permissions=["change"], description="Approve selected refund requests"
     )
     def approve_refunds(self, request, queryset):
+
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
         approved = 0
         skipped = 0
 
         for refund_id in queryset.values_list(
-            'pk',
+            "pk",
             flat=True,
         ):
 
@@ -714,7 +732,7 @@ class PaymentRefundAdmin(admin.ModelAdmin):
                 approve_refund_request(
                     refund_id=refund_id,
                     admin_user=request.user,
-                    note='Approved from Django Admin.',
+                    note="Approved from Django Admin.",
                 )
                 approved += 1
 
@@ -723,20 +741,25 @@ class PaymentRefundAdmin(admin.ModelAdmin):
 
         self.message_user(
             request,
-            f'{approved} approved, {skipped} skipped.',
+            f"{approved} approved, {skipped} skipped.",
             messages.WARNING if skipped else messages.SUCCESS,
         )
 
-    @admin.action(
-        description='Reject selected refund requests'
-    )
+    @admin.action(permissions=["change"], description="Reject selected refund requests")
     def reject_refunds(self, request, queryset):
+
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
         rejected = 0
         skipped = 0
 
         for refund_id in queryset.values_list(
-            'pk',
+            "pk",
             flat=True,
         ):
 
@@ -744,7 +767,7 @@ class PaymentRefundAdmin(admin.ModelAdmin):
                 reject_refund_request(
                     refund_id=refund_id,
                     admin_user=request.user,
-                    note='Rejected by administrator.',
+                    note="Rejected by administrator.",
                 )
                 rejected += 1
 
@@ -753,20 +776,28 @@ class PaymentRefundAdmin(admin.ModelAdmin):
 
         self.message_user(
             request,
-            f'{rejected} rejected, {skipped} skipped.',
+            f"{rejected} rejected, {skipped} skipped.",
             messages.WARNING if skipped else messages.SUCCESS,
         )
 
     @admin.action(
-        description='Process approved refunds through SSLCommerz'
+        permissions=["change"],
+        description="Process approved refunds through SSLCommerz",
     )
     def process_refunds(self, request, queryset):
+
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
         if queryset.count() != 1:
 
             self.message_user(
                 request,
-                'Select exactly one approved refund.',
+                "Select exactly one approved refund.",
                 messages.ERROR,
             )
             return
@@ -781,7 +812,7 @@ class PaymentRefundAdmin(admin.ModelAdmin):
 
             self.message_user(
                 request,
-                f'Refund #{refund.pk}: {refund.status}.',
+                f"Refund #{refund.pk}: {refund.status}.",
                 messages.SUCCESS,
             )
 
@@ -790,21 +821,28 @@ class PaymentRefundAdmin(admin.ModelAdmin):
             self.message_user(
                 request,
                 (
-                    f'{exc} Do not retry automatically. '
-                    'Check the SSLCommerz merchant dashboard.'
+                    f"{exc} Do not retry automatically. "
+                    "Check the SSLCommerz merchant dashboard."
                 ),
                 messages.ERROR,
             )
 
     @admin.action(
-        description='Check selected refunds with SSLCommerz'
+        permissions=["change"], description="Check selected refunds with SSLCommerz"
     )
     def check_refunds(self, request, queryset):
+
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
         checked = 0
         skipped = 0
 
-        for refund in queryset.select_related('payment'):
+        for refund in queryset.select_related("payment"):
 
             try:
                 check_gateway_refund(refund)
@@ -815,6 +853,6 @@ class PaymentRefundAdmin(admin.ModelAdmin):
 
         self.message_user(
             request,
-            f'{checked} checked, {skipped} require manual review.',
+            f"{checked} checked, {skipped} require manual review.",
             messages.WARNING if skipped else messages.SUCCESS,
         )

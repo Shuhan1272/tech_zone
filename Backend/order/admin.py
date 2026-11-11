@@ -1,7 +1,9 @@
-
 from django import forms
 from django.contrib import admin, messages
-from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.exceptions import (
+    PermissionDenied,
+    ValidationError as DjangoValidationError,
+)
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -12,10 +14,10 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from .models import Order, OrderItem
 from .services import cancel_order, confirm_cod_payment
 
-
 # =========================================================
 # ERROR MESSAGE HELPER
 # =========================================================
+
 
 def readable_error(exc):
     """
@@ -49,14 +51,11 @@ def readable_error(exc):
 # SAFE ORDER STATUS TRANSITION
 # =========================================================
 
+
 @transaction.atomic
 def change_order_status(order_id, new_status):
 
-    order = (
-        Order.objects
-        .select_for_update()
-        .get(pk=order_id)
-    )
+    order = Order.objects.select_for_update().get(pk=order_id)
 
     current_status = order.status
 
@@ -71,10 +70,7 @@ def change_order_status(order_id, new_status):
         "cancelled": [],
     }
 
-    allowed = allowed_transitions.get(
-        current_status,
-        []
-    )
+    allowed = allowed_transitions.get(current_status, [])
 
     if new_status not in allowed:
         raise DjangoValidationError(
@@ -106,9 +102,7 @@ def change_order_status(order_id, new_status):
             )
 
     else:
-        raise DjangoValidationError(
-            "Unsupported payment method."
-        )
+        raise DjangoValidationError("Unsupported payment method.")
 
     order.status = new_status
 
@@ -126,6 +120,7 @@ def change_order_status(order_id, new_status):
 # ORDER ADMIN FORM
 # =========================================================
 
+
 class OrderAdminForm(forms.ModelForm):
 
     # This is a separate field used to request a transition.
@@ -134,9 +129,7 @@ class OrderAdminForm(forms.ModelForm):
         label="Change Order Status",
         required=False,
         choices=[],
-        help_text=(
-            "Select the next permitted status and save."
-        ),
+        help_text=("Select the next permitted status and save."),
     )
 
     class Meta:
@@ -150,9 +143,7 @@ class OrderAdminForm(forms.ModelForm):
         order = self.instance
 
         if not order or not order.pk:
-            self.fields["new_order_status"].choices = [
-                ("", "No order selected")
-            ]
+            self.fields["new_order_status"].choices = [("", "No order selected")]
             return
 
         allowed_transitions = {
@@ -163,32 +154,20 @@ class OrderAdminForm(forms.ModelForm):
             "cancelled": [],
         }
 
-        allowed = allowed_transitions.get(
-            order.status,
-            []
-        )
+        allowed = allowed_transitions.get(order.status, [])
 
-        choices = [
-            ("", f"Keep current status ({order.get_status_display()})")
-        ]
+        choices = [("", f"Keep current status ({order.get_status_display()})")]
 
         status_labels = dict(Order.STATUS_CHOICES)
 
         for value in allowed:
-            choices.append(
-                (
-                    value,
-                    status_labels.get(value, value.title())
-                )
-            )
+            choices.append((value, status_labels.get(value, value.title())))
 
         self.fields["new_order_status"].choices = choices
 
     def clean_new_order_status(self):
 
-        new_status = self.cleaned_data.get(
-            "new_order_status"
-        )
+        new_status = self.cleaned_data.get("new_order_status")
 
         order = self.instance
 
@@ -203,13 +182,8 @@ class OrderAdminForm(forms.ModelForm):
             "cancelled": [],
         }
 
-        if new_status not in allowed_transitions.get(
-            order.status,
-            []
-        ):
-            raise forms.ValidationError(
-                "This order status transition is not allowed."
-            )
+        if new_status not in allowed_transitions.get(order.status, []):
+            raise forms.ValidationError("This order status transition is not allowed.")
 
         return new_status
 
@@ -217,6 +191,7 @@ class OrderAdminForm(forms.ModelForm):
 # =========================================================
 # ORDER ITEM INLINE
 # =========================================================
+
 
 class OrderItemInline(admin.TabularInline):
 
@@ -253,6 +228,7 @@ class OrderItemInline(admin.TabularInline):
 # =========================================================
 # ORDER ADMIN
 # =========================================================
+
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -306,7 +282,6 @@ class OrderAdmin(admin.ModelAdmin):
         "user",
         "status",
         "payment_status",
-
         "shipping_name",
         "shipping_phone",
         "shipping_address",
@@ -317,15 +292,12 @@ class OrderAdmin(admin.ModelAdmin):
         "shipping_upazila",
         "shipping_postal_code",
         "shipping_instructions",
-
         "payment_method",
-
         "subtotal",
         "discount",
         "discount_code",
         "discount_amount",
         "total_amount",
-
         "created_at",
         "updated_at",
     ]
@@ -341,9 +313,8 @@ class OrderAdmin(admin.ModelAdmin):
                     "created_at",
                     "updated_at",
                 ]
-            }
+            },
         ),
-
         (
             "Customer Information",
             {
@@ -351,9 +322,8 @@ class OrderAdmin(admin.ModelAdmin):
                     "shipping_name",
                     "shipping_phone",
                 ]
-            }
+            },
         ),
-
         (
             "Delivery Address",
             {
@@ -367,9 +337,8 @@ class OrderAdmin(admin.ModelAdmin):
                     "shipping_postal_code",
                     "shipping_instructions",
                 ]
-            }
+            },
         ),
-
         (
             "Payment Information",
             {
@@ -377,9 +346,8 @@ class OrderAdmin(admin.ModelAdmin):
                     "payment_method",
                     "payment_status",
                 ]
-            }
+            },
         ),
-
         (
             "Order Pricing",
             {
@@ -390,13 +358,11 @@ class OrderAdmin(admin.ModelAdmin):
                     "discount_amount",
                     "total_amount",
                 ]
-            }
+            },
         ),
     ]
 
-    inlines = [
-        OrderItemInline
-    ]
+    inlines = [OrderItemInline]
 
     actions = [
         "confirm_orders",
@@ -423,10 +389,7 @@ class OrderAdmin(admin.ModelAdmin):
     @admin.display(description="Total Amount")
     def formatted_total(self, obj):
 
-        return format_html(
-            "<strong>৳{}</strong>",
-            f"{obj.total_amount:,.2f}"
-        )
+        return format_html("<strong>৳{}</strong>", f"{obj.total_amount:,.2f}")
 
     @admin.display(description="Order Status")
     def colored_status(self, obj):
@@ -439,22 +402,19 @@ class OrderAdmin(admin.ModelAdmin):
             "cancelled": "#dc2626",
         }
 
-        color = colors.get(
-            obj.status,
-            "#6b7280"
-        )
+        color = colors.get(obj.status, "#6b7280")
 
         return format_html(
             '<span style="'
-            'background:{};'
-            'color:white;'
-            'padding:5px 10px;'
-            'border-radius:5px;'
-            'font-weight:600;'
-            'display:inline-block;'
+            "background:{};"
+            "color:white;"
+            "padding:5px 10px;"
+            "border-radius:5px;"
+            "font-weight:600;"
+            "display:inline-block;"
             '">{}</span>',
             color,
-            obj.get_status_display()
+            obj.get_status_display(),
         )
 
     @admin.display(description="Payment Status")
@@ -467,22 +427,19 @@ class OrderAdmin(admin.ModelAdmin):
             "refunded": "#2563eb",
         }
 
-        color = colors.get(
-            obj.payment_status,
-            "#6b7280"
-        )
+        color = colors.get(obj.payment_status, "#6b7280")
 
         return format_html(
             '<span style="'
-            'background:{};'
-            'color:white;'
-            'padding:5px 10px;'
-            'border-radius:5px;'
-            'font-weight:600;'
-            'display:inline-block;'
+            "background:{};"
+            "color:white;"
+            "padding:5px 10px;"
+            "border-radius:5px;"
+            "font-weight:600;"
+            "display:inline-block;"
             '">{}</span>',
             color,
-            obj.get_payment_status_display()
+            obj.get_payment_status_display(),
         )
 
     # =====================================================
@@ -492,27 +449,17 @@ class OrderAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
 
         if not change:
-            super().save_model(
-                request,
-                obj,
-                form,
-                change
-            )
+            super().save_model(request, obj, form, change)
             return
 
-        new_status = form.cleaned_data.get(
-            "new_order_status"
-        )
+        new_status = form.cleaned_data.get("new_order_status")
 
         if not new_status:
             return
 
         try:
 
-            updated_order = change_order_status(
-                obj.pk,
-                new_status
-            )
+            updated_order = change_order_status(obj.pk, new_status)
 
             obj.status = updated_order.status
             obj.payment_status = updated_order.payment_status
@@ -524,39 +471,32 @@ class OrderAdmin(admin.ModelAdmin):
                     f"Order #{obj.pk} status updated "
                     f"to {updated_order.get_status_display()}."
                 ),
-                messages.SUCCESS
+                messages.SUCCESS,
             )
 
-        except (
-            DjangoValidationError,
-            DRFValidationError
-        ) as exc:
+        except (DjangoValidationError, DRFValidationError) as exc:
 
-            self.message_user(
-                request,
-                readable_error(exc),
-                messages.ERROR
-            )
+            self.message_user(request, readable_error(exc), messages.ERROR)
 
     # =====================================================
     # BULK ACTION HELPER
     # =====================================================
 
     def execute_bulk_action(
-        self,
-        request,
-        queryset,
-        new_status=None,
-        special_action=None
+        self, request, queryset, new_status=None, special_action=None
     ):
+
+        if not (
+            request.user.is_active
+            and request.user.is_staff
+            and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
 
         completed = 0
         skipped = 0
 
-        for order_id in queryset.values_list(
-            "id",
-            flat=True
-        ):
+        for order_id in queryset.values_list("id", flat=True):
 
             try:
 
@@ -566,7 +506,7 @@ class OrderAdmin(admin.ModelAdmin):
                         self.message_user(
                             request,
                             "Only superusers can confirm COD payments.",
-                            messages.ERROR
+                            messages.ERROR,
                         )
                         return
 
@@ -574,104 +514,63 @@ class OrderAdmin(admin.ModelAdmin):
 
                 elif new_status:
 
-                    change_order_status(
-                        order_id,
-                        new_status
-                    )
+                    change_order_status(order_id, new_status)
 
                 completed += 1
 
-            except (
-                DjangoValidationError,
-                DRFValidationError
-            ):
+            except (DjangoValidationError, DRFValidationError):
 
                 skipped += 1
 
         self.message_user(
             request,
-            (
-                f"{completed} order(s) updated. "
-                f"{skipped} skipped."
-            ),
-            (
-                messages.WARNING
-                if skipped
-                else messages.SUCCESS
-            )
+            (f"{completed} order(s) updated. " f"{skipped} skipped."),
+            (messages.WARNING if skipped else messages.SUCCESS),
         )
 
     # =====================================================
     # BULK CONFIRM
     # =====================================================
 
-    @admin.action(
-        description="Confirm selected orders"
-    )
+    @admin.action(permissions=["change"], description="Confirm selected orders")
     def confirm_orders(self, request, queryset):
 
-        self.execute_bulk_action(
-            request,
-            queryset,
-            new_status="confirmed"
-        )
+        self.execute_bulk_action(request, queryset, new_status="confirmed")
 
     # =====================================================
     # BULK SHIP
     # =====================================================
 
-    @admin.action(
-        description="Mark selected orders as shipped"
-    )
+    @admin.action(permissions=["change"], description="Mark selected orders as shipped")
     def ship_orders(self, request, queryset):
 
-        self.execute_bulk_action(
-            request,
-            queryset,
-            new_status="shipped"
-        )
+        self.execute_bulk_action(request, queryset, new_status="shipped")
 
     # =====================================================
     # BULK DELIVER
     # =====================================================
 
     @admin.action(
-        description="Mark selected orders as delivered"
+        permissions=["change"], description="Mark selected orders as delivered"
     )
     def deliver_orders(self, request, queryset):
 
-        self.execute_bulk_action(
-            request,
-            queryset,
-            new_status="delivered"
-        )
+        self.execute_bulk_action(request, queryset, new_status="delivered")
 
     # =====================================================
     # BULK CONFIRM COD PAYMENT
     # =====================================================
 
-    @admin.action(
-        description="Confirm COD payments"
-    )
+    @admin.action(permissions=["change"], description="Confirm COD payments")
     def confirm_cod_payments(self, request, queryset):
 
-        self.execute_bulk_action(
-            request,
-            queryset,
-            special_action="confirm_cod"
-        )
+        self.execute_bulk_action(request, queryset, special_action="confirm_cod")
 
     # =====================================================
     # BULK CANCEL
     # =====================================================
 
-    @admin.action(
-        description="Cancel selected orders"
-    )
+    @admin.action(permissions=["change"], description="Cancel selected orders")
     def cancel_orders(self, request, queryset):
 
-        self.execute_bulk_action(
-            request,
-            queryset,
-            new_status="cancelled"
-        )
+        self.execute_bulk_action(request, queryset, new_status="cancelled")

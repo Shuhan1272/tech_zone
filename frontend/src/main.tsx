@@ -4,11 +4,15 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import { migrateFlutterHash } from './lib/router';
 
-import './styles.css';
+import './styles.css'; 
 
 
 
-migrateFlutterHash();
+if (window.location.pathname === "/admin") {
+  window.location.replace("/admin/" + window.location.search + window.location.hash);
+} else {
+  migrateFlutterHash();
+}
 
 const root = document.getElementById('root');
 

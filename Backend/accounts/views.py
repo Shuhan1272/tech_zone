@@ -8,10 +8,7 @@ from .throttles import LoginThrottle, RegisterThrottle
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated
-)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from rest_framework.response import Response
 
@@ -32,85 +29,53 @@ from .serializers import (
     ResetPasswordSerializer,
     VerifyEmailOTPSerializer,
     VerifyPasswordOTPSerializer,
-    ResendEmailOTPSerializer
+    ResendEmailOTPSerializer,
 )
 
-from .utils import (
-    send_verification_otp,
-    send_password_reset_otp
-)
-
-
-
+from .utils import send_verification_otp, send_password_reset_otp
 
 # =========================================================
 # REGISTER
 # =========================================================
 
+
 class RegisterView(generics.GenericAPIView):
 
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
-    #throttle_classes = [RegisterThrottle]
+    # throttle_classes = [RegisterThrottle]
 
     def post(self, request):
 
-        
-        serializer = self.get_serializer(
-            data=request.data
-        )
+        serializer = self.get_serializer(data=request.data)
 
-        user = User.objects.filter(email=serializer.initial_data.get('email')).first()
-
-        if user and not user.is_email_verified:
-            user.delete()
-
-        serializer.is_valid(
-            raise_exception=True
-        )
+        serializer.is_valid(raise_exception=True)
 
         user = serializer.save()
 
         send_verification_otp(user)
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 # =========================================================
 # VERIFY REGISTER EMAIL OTP
 # =========================================================
 
-class VerifyEmailView(
-    generics.GenericAPIView
-):
 
-    serializer_class = (
-        VerifyEmailOTPSerializer
-    )
+class VerifyEmailView(generics.GenericAPIView):
 
-    permission_classes = [
-        AllowAny
-    ]
+    serializer_class = VerifyEmailOTPSerializer
 
-    def post(
-        self,
-        request
-    ):
+    permission_classes = [AllowAny]
 
-        serializer = self.get_serializer(
-            data=request.data
-        )
+    def post(self, request):
 
-        serializer.is_valid(
-            raise_exception=True
-        )
+        serializer = self.get_serializer(data=request.data)
 
-        user = serializer.validated_data[
-            'user'
-        ]
+        serializer.is_valid(raise_exception=True)
 
+        user = serializer.validated_data["user"]
 
         # --------------------------------
         # Verify email
@@ -122,69 +87,44 @@ class VerifyEmailView(
 
         user.email_otp_created_at = None
 
-
         user.save(
-            update_fields=[
-                'is_email_verified',
-                'email_otp',
-                'email_otp_created_at'
-            ]
+            update_fields=["is_email_verified", "email_otp", "email_otp_created_at"]
         )
-
 
         # --------------------------------
         # Generate JWT
         # --------------------------------
 
-        refresh = RefreshToken.for_user(
-            user
-        )
+        refresh = RefreshToken.for_user(user)
 
         access_token = refresh.access_token
-
 
         # --------------------------------
         # Return JWT + user
         # --------------------------------
 
-        return Response({
-
-            'message':
-                'Email verified successfully.',
-
-            'access':
-                str(access_token),
-
-            'refresh':
-                str(refresh),
-
-            'user': {
-
-                'id':
-                    user.id,
-
-                'email':
-                    user.email,
-
-                'first_name':
-                    user.first_name,
-
-                'last_name':
-                    user.last_name,
-
-                'is_email_verified':
-                    user.is_email_verified,
+        return Response(
+            {
+                "message": "Email verified successfully.",
+                "access": str(access_token),
+                "refresh": str(refresh),
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "is_email_verified": user.is_email_verified,
+                },
             }
-        })
+        )
 
 
 # =========================================================
 # RESEND REGISTER EMAIL OTP
 # =========================================================
 
-class ResendEmailOTPView(
-    generics.GenericAPIView
-):
+
+class ResendEmailOTPView(generics.GenericAPIView):
     """Issues a fresh verification OTP for an unverified account.
 
     The customer already has an account at this point, so there is nothing to
@@ -192,105 +132,70 @@ class ResendEmailOTPView(
     cooldown between sends.
     """
 
-    serializer_class = (
-        ResendEmailOTPSerializer
-    )
+    serializer_class = ResendEmailOTPSerializer
 
-    permission_classes = [
-        AllowAny
-    ]
+    permission_classes = [AllowAny]
 
-    def post(
-        self,
-        request
-    ):
+    def post(self, request):
 
-        serializer = self.get_serializer(
-            data=request.data
-        )
+        serializer = self.get_serializer(data=request.data)
 
-        serializer.is_valid(
-            raise_exception=True
-        )
+        serializer.is_valid(raise_exception=True)
 
-        user = serializer.validated_data[
-            'user'
-        ]
+        user = serializer.validated_data["user"]
 
         # Replaces the stored OTP and its timestamp, then mails it.
         send_verification_otp(user)
 
-        return Response({
-
-            'message':
-                'A new verification code has been sent to '
-                f'{user.email}.',
-
-            'email':
-                user.email,
-        })
+        return Response(
+            {
+                "message": "A new verification code has been sent to " f"{user.email}.",
+                "email": user.email,
+            }
+        )
 
 
 # =========================================================
 # LOGIN
 # =========================================================
 
-class LoginView(
-    TokenObtainPairView
-):
+
+class LoginView(TokenObtainPairView):
 
     serializer_class = LoginSerializer
-    #throttle_classes = [LoginThrottle]
+    throttle_classes = [LoginThrottle]
+
 
 # =========================================================
 # FORGOT PASSWORD
 # =========================================================
 
-class ForgotPasswordView(
-    generics.GenericAPIView
-):
 
-    serializer_class = (
-        ForgotPasswordSerializer
-    )
+class ForgotPasswordView(generics.GenericAPIView):
 
-    permission_classes = [
-        AllowAny
-    ]
+    serializer_class = ForgotPasswordSerializer
 
-    #throttle_classes = [ForgotPasswordThrottle]    
+    permission_classes = [AllowAny]
 
-    def post(
-        self,
-        request
-    ):
+    # throttle_classes = [ForgotPasswordThrottle]
 
-        serializer = self.get_serializer(
-            data=request.data
-        )
+    def post(self, request):
 
-        serializer.is_valid(
-            raise_exception=True
-        )
+        serializer = self.get_serializer(data=request.data)
 
+        serializer.is_valid(raise_exception=True)
 
         # --------------------------------
         # Get email
         # --------------------------------
 
-        email = serializer.validated_data[
-            'email'
-        ]
-
+        email = serializer.validated_data["email"]
 
         # --------------------------------
         # Find user
         # --------------------------------
 
-        user = User.objects.filter(
-            email=email
-        ).first()
-
+        user = User.objects.filter(email=email).first()
 
         # --------------------------------
         # Send OTP if user exists
@@ -298,88 +203,60 @@ class ForgotPasswordView(
 
         if user:
 
-            send_password_reset_otp(
-                user
-            )
-
+            send_password_reset_otp(user)
 
         # --------------------------------
         # Generic response
         # --------------------------------
 
-        return Response({
-
-            'message':
-                'If an account exists with this email, '
-                'a password reset OTP has been sent.'
-
-        })
+        return Response(
+            {
+                "message": "If an account exists with this email, "
+                "a password reset OTP has been sent."
+            }
+        )
 
 
 # =========================================================
 #  VERIFY FORGOT PASSWORD OTP
 # =========================================================
 
-class VerifyPasswordOTPView(
-    generics.GenericAPIView
-):
 
-    serializer_class = (
-        VerifyPasswordOTPSerializer
-    )
+class VerifyPasswordOTPView(generics.GenericAPIView):
 
-    permission_classes = [
-        AllowAny
-    ]
+    serializer_class = VerifyPasswordOTPSerializer
 
-    def post(
-        self,
-        request
-    ):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
 
         # --------------------------------
         # Validate email + OTP
         # --------------------------------
 
-        serializer = self.get_serializer(
-            data=request.data
-        )
+        serializer = self.get_serializer(data=request.data)
 
-        serializer.is_valid(
-            raise_exception=True
-        )
-
+        serializer.is_valid(raise_exception=True)
 
         # --------------------------------
         # Get user
         # --------------------------------
 
-        user = serializer.validated_data[
-            'user'
-        ]
-
+        user = serializer.validated_data["user"]
 
         # --------------------------------
         # Generate temporary reset token
         # --------------------------------
 
-        reset_token = secrets.token_urlsafe(
-            32
-        )
-
+        reset_token = secrets.token_urlsafe(32)
 
         # --------------------------------
         # Save reset token
         # --------------------------------
 
-        user.password_reset_token = (
-            reset_token
-        )
+        user.password_reset_token = reset_token
 
-        user.password_reset_token_created_at = (
-            timezone.now()
-        )
-
+        user.password_reset_token_created_at = timezone.now()
 
         # --------------------------------
         # Clear OTP
@@ -389,96 +266,69 @@ class VerifyPasswordOTPView(
 
         user.email_otp_created_at = None
 
-
         # --------------------------------
         # Save user
         # --------------------------------
 
         user.save(
             update_fields=[
-                'password_reset_token',
-                'password_reset_token_created_at',
-                'email_otp',
-                'email_otp_created_at',
+                "password_reset_token",
+                "password_reset_token_created_at",
+                "email_otp",
+                "email_otp_created_at",
             ]
         )
-
 
         # --------------------------------
         # Response
         # --------------------------------
 
-        return Response({
+        return Response(
+            {
+                "message": "OTP verified successfully.",
+                "reset_token": reset_token,
+            }
+        )
 
-            'message':
-                'OTP verified successfully.',
-
-            'reset_token':
-                reset_token,
-
-        })
 
 # =========================================================
 # RESET PASSWORD FOR FORGOT PASSWORD
 # =========================================================
 
 
-class ResetPasswordView(
-    generics.GenericAPIView
-):
+class ResetPasswordView(generics.GenericAPIView):
 
-    serializer_class = (
-        ResetPasswordSerializer
-    )
+    serializer_class = ResetPasswordSerializer
 
-    permission_classes = [
-        AllowAny
-    ]
+    permission_classes = [AllowAny]
 
-    def post(
-        self,
-        request
-    ):
+    def post(self, request):
 
         # --------------------------------
         # Validate reset token + password
         # --------------------------------
 
-        serializer = self.get_serializer(
-            data=request.data
-        )
+        serializer = self.get_serializer(data=request.data)
 
-        serializer.is_valid(
-            raise_exception=True
-        )
-
+        serializer.is_valid(raise_exception=True)
 
         # --------------------------------
         # Get user
         # --------------------------------
 
-        user = serializer.validated_data[
-            'user'
-        ]
-
+        user = serializer.validated_data["user"]
 
         # --------------------------------
         # Get new password
         # --------------------------------
 
-        password = serializer.validated_data[
-            'password'
-        ]
-
+        password = serializer.validated_data["password"]
 
         # --------------------------------
         # Set new password
         # --------------------------------
 
-        user.set_password(
-            password
-        )
-
+        user.set_password(password)
 
         # --------------------------------
         # Invalidate reset token
@@ -488,84 +338,55 @@ class ResetPasswordView(
 
         user.password_reset_token_created_at = None
 
-
         # --------------------------------
         # Save user
         # --------------------------------
 
         user.save(
             update_fields=[
-                'password',
-                'password_reset_token',
-                'password_reset_token_created_at',
+                "password",
+                "password_reset_token",
+                "password_reset_token_created_at",
             ]
         )
-
 
         # --------------------------------
         # Response
         # --------------------------------
 
-        return Response({
+        return Response({"message": "Password reset successfully."})
 
-            'message':
-                'Password reset successfully.'
-
-        })
 
 # =========================================================
 # CHANGE PASSWORD
 # =========================================================
 
-class ChangePasswordView(
-    generics.GenericAPIView
-):
 
-    serializer_class = (
-        ChangePasswordSerializer
-    )
+class ChangePasswordView(generics.GenericAPIView):
 
-    permission_classes = [
-        IsAuthenticated
-    ]
+    serializer_class = ChangePasswordSerializer
 
-    def post(
-        self,
-        request
-    ):
+    permission_classes = [IsAuthenticated]
 
-        serializer = self.get_serializer(
-            data=request.data
-        )
+    def post(self, request):
 
-        serializer.is_valid(
-            raise_exception=True
-        )
+        serializer = self.get_serializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
 
         user = request.user
 
-        user.set_password(
-            serializer.validated_data[
-                'new_password'
-            ]
-        )
+        user.set_password(serializer.validated_data["new_password"])
 
-        user.save(
-            update_fields=[
-                'password'
-            ]
-        )
+        user.save(update_fields=["password"])
 
-        return Response({
-            'message':
-                'Password changed successfully.'
-        })
-
+        return Response({"message": "Password changed successfully."})
 
 
 # =========================================================
 # MY PROFILE
 # =========================================================
+
 
 class MeView(generics.RetrieveUpdateAPIView):
 
@@ -575,7 +396,6 @@ class MeView(generics.RetrieveUpdateAPIView):
     def get_object(self):
 
         return self.request.user
-
 
 
 # =========================================================
@@ -590,12 +410,8 @@ class AddressViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
 
-        return Address.objects.filter(
-            user=self.request.user
-        )
+        return Address.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
 
-        serializer.save(
-            user=self.request.user
-        )
+        serializer.save(user=self.request.user)

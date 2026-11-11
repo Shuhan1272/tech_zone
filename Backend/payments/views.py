@@ -1,4 +1,3 @@
-
 from urllib.parse import urlsplit
 from uuid import uuid4
 
@@ -9,7 +8,12 @@ from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import (
+    AllowAny,
+    BasePermission,
+    IsAuthenticated,
+    SAFE_METHODS,
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -30,9 +34,23 @@ from .services import (
 )
 
 
+class RefundStaffPermission(BasePermission):
+    """Apply the same model permissions as the operations console."""
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not (user.is_authenticated and user.is_active and user.is_staff):
+            return False
+        required = ["payments.view_paymentrefund"]
+        if request.method not in SAFE_METHODS:
+            required.append("payments.change_paymentrefund")
+        return user.has_perms(required)
+
+
 # =========================================================
 # PAGINATION
 # =========================================================
+
 
 class PaymentPagination(PageNumberPagination):
     page_size = 20
@@ -43,6 +61,7 @@ class PaymentPagination(PageNumberPagination):
 # =========================================================
 # ERROR RESPONSES
 # =========================================================
+
 
 def gateway_error_response(error):
     return Response(
@@ -62,6 +81,7 @@ def refund_error_response(error):
 # REFUND RESPONSE DATA
 # =========================================================
 
+
 def refund_response_data(refund):
     return {
         "id": refund.pk,
@@ -74,17 +94,14 @@ def refund_response_data(refund):
         "status_display": refund.get_status_display(),
         "refund_reference_id": refund.refund_reference_id,
         "admin_note": refund.admin_note,
-        "reviewed_at": (
-            refund.reviewed_at.isoformat()
-            if refund.reviewed_at else None
-        ),
+        "reviewed_at": (refund.reviewed_at.isoformat() if refund.reviewed_at else None),
         "processing_started_at": (
             refund.processing_started_at.isoformat()
-            if refund.processing_started_at else None
+            if refund.processing_started_at
+            else None
         ),
         "completed_at": (
-            refund.completed_at.isoformat()
-            if refund.completed_at else None
+            refund.completed_at.isoformat() if refund.completed_at else None
         ),
         "failure_reason": refund.failure_reason,
         "created_at": refund.created_at.isoformat(),
@@ -95,6 +112,7 @@ def refund_response_data(refund):
 # =========================================================
 # PAYMENT INITIATION
 # =========================================================
+
 
 class PaymentInitiateView(generics.GenericAPIView):
     serializer_class = PaymentInitiateSerializer
@@ -112,16 +130,17 @@ class PaymentInitiateView(generics.GenericAPIView):
             )
 
             if order.payment_method != "sslcommerz":
-                raise ValidationError({
-                    "payment_method":
-                        "Online payment is not available for Cash on Delivery orders."
-                })
+                raise ValidationError(
+                    {
+                        "payment_method": "Online payment is not available for Cash on Delivery orders."
+                    }
+                )
 
             # Order must still be active.
             if order.status not in ("pending", "confirmed"):
-                raise ValidationError({
-                    "order": "This order is not eligible for payment."
-                })
+                raise ValidationError(
+                    {"order": "This order is not eligible for payment."}
+                )
 
             # Never initiate another payment for an already
             # paid or refunded order.
@@ -140,15 +159,12 @@ class PaymentInitiateView(generics.GenericAPIView):
                 )
 
             if order.total_amount <= 0:
-                raise ValidationError({
-                    "order": "Invalid order amount."
-                })
+                raise ValidationError({"order": "Invalid order amount."})
 
             # Check existing completed payments as an extra
             # safeguard against duplicate charges.
             paid_payment = (
-                Payment.objects
-                .filter(order=order, status="paid")
+                Payment.objects.filter(order=order, status="paid")
                 .order_by("-id")
                 .first()
             )
@@ -171,8 +187,7 @@ class PaymentInitiateView(generics.GenericAPIView):
 
             # Reuse a pending gateway session when possible.
             existing = (
-                Payment.objects
-                .filter(
+                Payment.objects.filter(
                     order=order,
                     status__in=[
                         "initiating",
@@ -185,24 +200,25 @@ class PaymentInitiateView(generics.GenericAPIView):
             )
 
             if existing:
-                if (
-                    existing.status == "pending"
-                    and existing.gateway_url
-                ):
-                    return Response({
-                        "transaction_id": existing.transaction_id,
-                        "payment_url": existing.gateway_url,
-                        "amount": str(existing.amount),
-                        "currency": existing.currency,
-                        "payment_status": "pending",
-                    })
-
-                raise ValidationError({
-                    "payment": (
-                        "A payment is already being processed. "
-                        "Verify its status before retrying."
+                if existing.status == "pending" and existing.gateway_url:
+                    return Response(
+                        {
+                            "transaction_id": existing.transaction_id,
+                            "payment_url": existing.gateway_url,
+                            "amount": str(existing.amount),
+                            "currency": existing.currency,
+                            "payment_status": "pending",
+                        }
                     )
-                })
+
+                raise ValidationError(
+                    {
+                        "payment": (
+                            "A payment is already being processed. "
+                            "Verify its status before retrying."
+                        )
+                    }
+                )
 
             payment = Payment.objects.create(
                 order=order,
@@ -228,9 +244,7 @@ class PaymentInitiateView(generics.GenericAPIView):
                     or parsed.hostname.endswith(".sslcommerz.com")
                 )
             ):
-                raise GatewayError(
-                    "SSLCommerz returned an invalid payment URL."
-                )
+                raise GatewayError("SSLCommerz returned an invalid payment URL.")
 
         except GatewayError as exc:
             Payment.objects.filter(
@@ -247,9 +261,7 @@ class PaymentInitiateView(generics.GenericAPIView):
             pk=payment.pk,
             status="initiating",
         ).update(
-            gateway_session_key=str(
-                result.get("sessionkey") or ""
-            ),
+            gateway_session_key=str(result.get("sessionkey") or ""),
             gateway_url=gateway_url,
             status="pending",
         )
@@ -258,12 +270,14 @@ class PaymentInitiateView(generics.GenericAPIView):
             payment.refresh_from_db()
 
             if payment.status == "paid":
-                return Response({
-                    "transaction_id": payment.transaction_id,
-                    "payment_status": "paid",
-                    "amount": str(payment.amount),
-                    "currency": payment.currency,
-                })
+                return Response(
+                    {
+                        "transaction_id": payment.transaction_id,
+                        "payment_status": "paid",
+                        "amount": str(payment.amount),
+                        "currency": payment.currency,
+                    }
+                )
 
             return Response(
                 {
@@ -291,6 +305,7 @@ class PaymentInitiateView(generics.GenericAPIView):
 # MY PAYMENT HISTORY
 # =========================================================
 
+
 class MyPaymentListView(generics.ListAPIView):
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
@@ -298,8 +313,7 @@ class MyPaymentListView(generics.ListAPIView):
 
     def get_queryset(self):
         return (
-            Payment.objects
-            .filter(order__user=self.request.user)
+            Payment.objects.filter(order__user=self.request.user)
             .select_related("order", "refund")
             .order_by("-created_at")
         )
@@ -309,15 +323,14 @@ class MyPaymentListView(generics.ListAPIView):
 # PAYMENT DETAILS
 # =========================================================
 
+
 class PaymentDetailView(generics.RetrieveAPIView):
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return (
-            Payment.objects
-            .filter(order__user=self.request.user)
-            .select_related("order", "refund")
+        return Payment.objects.filter(order__user=self.request.user).select_related(
+            "order", "refund"
         )
 
 
@@ -325,14 +338,13 @@ class PaymentDetailView(generics.RetrieveAPIView):
 # VERIFY PAYMENT
 # =========================================================
 
+
 class PaymentVerifyView(generics.GenericAPIView):
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Payment.objects.filter(
-            order__user=self.request.user
-        )
+        return Payment.objects.filter(order__user=self.request.user)
 
     def post(self, request, pk):
         payment = self.get_object()
@@ -342,14 +354,13 @@ class PaymentVerifyView(generics.GenericAPIView):
         except GatewayError as exc:
             return gateway_error_response(exc)
 
-        return Response(
-            PaymentSerializer(payment).data
-        )
+        return Response(PaymentSerializer(payment).data)
 
 
 # =========================================================
 # CUSTOMER REFUND REQUEST
 # =========================================================
+
 
 class RefundRequestView(APIView):
     permission_classes = [IsAuthenticated]
@@ -361,9 +372,7 @@ class RefundRequestView(APIView):
         try:
             order_id = int(order_id)
         except (TypeError, ValueError):
-            raise ValidationError({
-                "order_id": "A valid order ID is required."
-            })
+            raise ValidationError({"order_id": "A valid order ID is required."})
 
         order = get_object_or_404(
             Order,
@@ -376,16 +385,12 @@ class RefundRequestView(APIView):
             or order.payment_status != "paid"
             or order.status not in ("pending", "confirmed")
         ):
-            raise ValidationError({
-                "order": (
-                    "This order is not eligible "
-                    "for a refund request."
-                )
-            })
+            raise ValidationError(
+                {"order": ("This order is not eligible " "for a refund request.")}
+            )
 
         payment = (
-            Payment.objects
-            .filter(
+            Payment.objects.filter(
                 order=order,
                 status="paid",
             )
@@ -394,9 +399,7 @@ class RefundRequestView(APIView):
         )
 
         if payment is None:
-            raise ValidationError({
-                "payment": "No completed online payment was found."
-            })
+            raise ValidationError({"payment": "No completed online payment was found."})
 
         try:
             refund = request_full_refund(
@@ -407,11 +410,7 @@ class RefundRequestView(APIView):
         except GatewayError as exc:
             return refund_error_response(exc)
 
-        refund = (
-            PaymentRefund.objects
-            .select_related("payment")
-            .get(pk=refund.pk)
-        )
+        refund = PaymentRefund.objects.select_related("payment").get(pk=refund.pk)
 
         return Response(
             {
@@ -426,6 +425,7 @@ class RefundRequestView(APIView):
 # CUSTOMER ORDER REFUND STATUS
 # =========================================================
 
+
 class OrderRefundStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -437,81 +437,70 @@ class OrderRefundStatusView(APIView):
         )
 
         refund = (
-            PaymentRefund.objects
-            .select_related("payment")
+            PaymentRefund.objects.select_related("payment")
             .filter(payment__order=order)
             .order_by("-created_at")
             .first()
         )
 
         if refund is None:
-            return Response({
-                "has_refund": False,
-                "refund": None,
-            })
+            return Response(
+                {
+                    "has_refund": False,
+                    "refund": None,
+                }
+            )
 
-        return Response({
-            "has_refund": True,
-            "refund": refund_response_data(refund),
-        })
+        return Response(
+            {
+                "has_refund": True,
+                "refund": refund_response_data(refund),
+            }
+        )
 
 
 # =========================================================
 # STAFF REFUND LIST
 # =========================================================
 
+
 class AdminRefundListView(generics.ListAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RefundStaffPermission]
     pagination_class = PaymentPagination
 
     def get_queryset(self):
-        queryset = (
-            PaymentRefund.objects
-            .select_related(
-                "payment",
-                "payment__order",
-                "reviewed_by",
-            )
-            .order_by("-created_at")
-        )
+        queryset = PaymentRefund.objects.select_related(
+            "payment",
+            "payment__order",
+            "reviewed_by",
+        ).order_by("-created_at")
 
-        refund_status = self.request.query_params.get(
-            "status"
-        )
+        refund_status = self.request.query_params.get("status")
 
         if refund_status:
-            queryset = queryset.filter(
-                status=refund_status
-            )
+            queryset = queryset.filter(status=refund_status)
 
         return queryset
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(
-            self.get_queryset()
-        )
+        queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
 
         if page is not None:
-            data = [
-                refund_response_data(refund)
-                for refund in page
-            ]
+            data = [refund_response_data(refund) for refund in page]
             return self.get_paginated_response(data)
 
-        return Response([
-            refund_response_data(refund)
-            for refund in queryset
-        ])
+        return Response([refund_response_data(refund) for refund in queryset])
 
 
 # =========================================================
 # STAFF REFUND DETAILS
 # =========================================================
 
+
 class AdminRefundDetailView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RefundStaffPermission]
 
     def get(self, request, pk):
         refund = get_object_or_404(
@@ -523,17 +512,16 @@ class AdminRefundDetailView(APIView):
             pk=pk,
         )
 
-        return Response(
-            refund_response_data(refund)
-        )
+        return Response(refund_response_data(refund))
 
 
 # =========================================================
 # STAFF APPROVES REFUND
 # =========================================================
 
+
 class AdminRefundApproveView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RefundStaffPermission]
 
     def post(self, request, pk):
         note = request.data.get("note", "")
@@ -547,24 +535,23 @@ class AdminRefundApproveView(APIView):
         except GatewayError as exc:
             return refund_error_response(exc)
 
-        refund = (
-            PaymentRefund.objects
-            .select_related("payment")
-            .get(pk=refund.pk)
-        )
+        refund = PaymentRefund.objects.select_related("payment").get(pk=refund.pk)
 
-        return Response({
-            "message": "Refund request approved.",
-            "refund": refund_response_data(refund),
-        })
+        return Response(
+            {
+                "message": "Refund request approved.",
+                "refund": refund_response_data(refund),
+            }
+        )
 
 
 # =========================================================
 # STAFF REJECTS REFUND
 # =========================================================
 
+
 class AdminRefundRejectView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RefundStaffPermission]
 
     def post(self, request, pk):
         note = request.data.get("note", "")
@@ -578,24 +565,23 @@ class AdminRefundRejectView(APIView):
         except GatewayError as exc:
             return refund_error_response(exc)
 
-        refund = (
-            PaymentRefund.objects
-            .select_related("payment")
-            .get(pk=refund.pk)
-        )
+        refund = PaymentRefund.objects.select_related("payment").get(pk=refund.pk)
 
-        return Response({
-            "message": "Refund request rejected.",
-            "refund": refund_response_data(refund),
-        })
+        return Response(
+            {
+                "message": "Refund request rejected.",
+                "refund": refund_response_data(refund),
+            }
+        )
 
 
 # =========================================================
 # STAFF PROCESSES APPROVED REFUND
 # =========================================================
 
+
 class AdminRefundProcessView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RefundStaffPermission]
 
     def post(self, request, pk):
         try:
@@ -606,27 +592,23 @@ class AdminRefundProcessView(APIView):
         except GatewayError as exc:
             return gateway_error_response(exc)
 
-        refund = (
-            PaymentRefund.objects
-            .select_related("payment")
-            .get(pk=refund.pk)
-        )
+        refund = PaymentRefund.objects.select_related("payment").get(pk=refund.pk)
 
-        return Response({
-            "message": (
-                "Refund processing request "
-                "has been submitted."
-            ),
-            "refund": refund_response_data(refund),
-        })
+        return Response(
+            {
+                "message": ("Refund processing request " "has been submitted."),
+                "refund": refund_response_data(refund),
+            }
+        )
 
 
 # =========================================================
 # STAFF CHECKS REFUND STATUS
 # =========================================================
 
+
 class AdminRefundCheckView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RefundStaffPermission]
 
     def post(self, request, pk):
         refund = get_object_or_404(
@@ -639,21 +621,20 @@ class AdminRefundCheckView(APIView):
         except GatewayError as exc:
             return gateway_error_response(exc)
 
-        refund = (
-            PaymentRefund.objects
-            .select_related("payment")
-            .get(pk=refund.pk)
-        )
+        refund = PaymentRefund.objects.select_related("payment").get(pk=refund.pk)
 
-        return Response({
-            "message": "Refund status checked.",
-            "refund": refund_response_data(refund),
-        })
+        return Response(
+            {
+                "message": "Refund status checked.",
+                "refund": refund_response_data(refund),
+            }
+        )
 
 
 # =========================================================
 # GATEWAY CALLBACK BASE
 # =========================================================
+
 
 class GatewayCallbackView(APIView):
     authentication_classes = []
@@ -669,6 +650,7 @@ class GatewayCallbackView(APIView):
 # =========================================================
 # PAYMENT SUCCESS CALLBACK
 # =========================================================
+
 
 class PaymentSuccessView(GatewayCallbackView):
 
@@ -712,6 +694,7 @@ class PaymentSuccessView(GatewayCallbackView):
 # FAILED / CANCELLED CALLBACKS
 # =========================================================
 
+
 class PaymentResultView(GatewayCallbackView):
     result = "failed"
 
@@ -744,6 +727,7 @@ class PaymentCancelView(PaymentResultView):
 # IPN CALLBACK
 # =========================================================
 
+
 class PaymentIPNView(GatewayCallbackView):
 
     def post(self, request):
@@ -753,18 +737,11 @@ class PaymentIPNView(GatewayCallbackView):
             "VALID",
             "VALIDATED",
         ):
-            return Response({
-                "message": "Notification received."
-            })
+            return Response({"message": "Notification received."})
 
-        if (
-            not data.get("tran_id")
-            or not data.get("val_id")
-        ):
+        if not data.get("tran_id") or not data.get("val_id"):
             return Response(
-                {
-                    "detail": "Missing transaction information."
-                },
+                {"detail": "Missing transaction information."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -776,7 +753,9 @@ class PaymentIPNView(GatewayCallbackView):
         except GatewayError as exc:
             return gateway_error_response(exc)
 
-        return Response({
-            "message": "Payment notification processed.",
-            "payment_status": payment.status,
-        })
+        return Response(
+            {
+                "message": "Payment notification processed.",
+                "payment_status": payment.status,
+            }
+        )

@@ -1,56 +1,44 @@
+"""Public reads and explicit, model-scoped staff permissions."""
+
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-# =========================================================
-# ADMIN OR READ ONLY
-# =========================================================
+def staff_can(user, model, action):
+    if not user.is_authenticated or not user.is_active or not user.is_staff:
+        return False
+    opts = model._meta
+    return user.has_perm(f"{opts.app_label}.{action}_{opts.model_name}")
+
+
+def view_model(view):
+    queryset = getattr(view, "queryset", None)
+    if queryset is not None:
+        return queryset.model
+    return view.get_serializer_class().Meta.model
+
 
 class IsAdminOrReadOnly(BasePermission):
+    """A staff flag or legacy role string never grants catalog write access."""
+
+    actions = {"POST": "add", "PUT": "change", "PATCH": "change", "DELETE": "delete"}
 
     def has_permission(self, request, view):
-
-        # Everyone can read.
         if request.method in SAFE_METHODS:
             return True
+        action = self.actions.get(request.method)
+        return bool(action and staff_can(request.user, view_model(view), action))
 
-        # Only admins can create, update or delete.
-        return (
-            request.user.is_authenticated
-            and getattr(request.user, 'role', None)
-            in ['admin', 'super_admin']
-        )
-
-
-# =========================================================
-# OWNER OR ADMIN OR READ ONLY
-# =========================================================
 
 class IsOwnerOrAdminOrReadOnly(BasePermission):
-
     def has_permission(self, request, view):
-
-        # Everyone can view questions and reviews.
-        if request.method in SAFE_METHODS:
-            return True
-
-        # Login required for creating or modifying.
-        return request.user.is_authenticated
+        return request.method in SAFE_METHODS or bool(
+            request.user.is_authenticated and request.user.is_active
+        )
 
     def has_object_permission(self, request, view, obj):
-
-        # Everyone can read.
         if request.method in SAFE_METHODS:
             return True
-
-        # Admins can manage all questions and reviews.
-        if (
-            getattr(request.user, 'role', None)
-            in ['admin', 'super_admin']
-        ):
-            return True
-
-        # Regular users can modify only their own content.
+        action = "delete" if request.method == "DELETE" else "change"
         return (
-            request.user.is_authenticated
-            and obj.user_id == request.user.pk
+            staff_can(request.user, type(obj), action) or obj.user_id == request.user.pk
         )

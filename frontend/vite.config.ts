@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 // API/media requests to Django on 127.0.0.1:8000. No CORS change is needed.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: { rollupOptions: { input: { storefront: "index.html", admin: "admin/index.html" } } },
   server: {
     host: 'localhost', port: 3000, strictPort: true,
     proxy: {

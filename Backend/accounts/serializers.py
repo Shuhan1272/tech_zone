@@ -1,21 +1,16 @@
 from datetime import timedelta
 from django.contrib.auth import authenticate
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import (
-    TokenObtainPairSerializer
-)
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import (
-    validate_password
-)
+from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 
 
 from .models import Address
-
 
 User = get_user_model()
 
@@ -24,158 +19,114 @@ User = get_user_model()
 # REGISTER
 # =========================================================
 
-class RegisterSerializer(
-    serializers.ModelSerializer
-):
 
+class RegisterSerializer(serializers.ModelSerializer):
 
-    password = serializers.CharField(
-        write_only=True
-    )
+    password = serializers.CharField(write_only=True)
 
-    password2 = serializers.CharField(
-        write_only=True
-    )
+    password2 = serializers.CharField(write_only=True)
 
     class Meta:
 
         model = User
 
         fields = [
-            'email',
-            'phone',
-            'first_name',
-            'last_name',
-            'password',
-            'password2',
+            "email",
+            "phone",
+            "first_name",
+            "last_name",
+            "password",
+            "password2",
         ]
-        
 
     def validate_email(self, value):
-        user = User.objects.filter(email=value).first()
-
-        if user:
-            if user.is_email_verified:
-                raise serializers.ValidationError(
-                    "A user with this email already exists."
-                )
-            user.delete()
-
+        # Registration never replaces an existing identity or its history.
+        # Unverified customers can request another verification code instead.
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError(
+                "A user with this email already exists. Sign in or resend your verification code."
+            )
         return value
-
 
     def validate(self, data):
 
-        if data['password'] != data['password2']:
+        if data["password"] != data["password2"]:
 
-            raise serializers.ValidationError({
-                'password2':
-                    'Passwords do not match.'
-            })
+            raise serializers.ValidationError({"password2": "Passwords do not match."})
 
         user = User(
-            email=data['email'],
-            phone=data['phone'],
-            first_name=data.get('first_name'),
-            last_name=data.get('last_name'),
+            email=data["email"],
+            phone=data["phone"],
+            first_name=data.get("first_name"),
+            last_name=data.get("last_name"),
         )
 
-        validate_password(
-            data['password'],
-            user=user
-        )
+        validate_password(data["password"], user=user)
 
         return data
 
     def create(self, validated_data):
 
-        validated_data.pop(
-            'password2'
-        )
+        validated_data.pop("password2")
 
-        password = validated_data.pop(
-            'password'
-        )
+        password = validated_data.pop("password")
 
-        user = User.objects.create_user(
-            password=password,
-            **validated_data
-        )
+        user = User.objects.create_user(password=password, **validated_data)
 
         return user
+
 
 # =========================================================
 # VERIFY EMAIL OTP
 # =========================================================
 
-class VerifyEmailOTPSerializer(
-    serializers.Serializer
-):
+
+class VerifyEmailOTPSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
 
-    otp = serializers.CharField(
-        min_length=6,
-        max_length=6
-    )
+    otp = serializers.CharField(min_length=6, max_length=6)
 
     def validate(self, data):
 
-        email = data['email']
-        otp = data['otp']
+        email = data["email"]
+        otp = data["otp"]
 
-        user = User.objects.filter(
-            email=email
-        ).first()
+        user = User.objects.filter(email=email).first()
 
         if not user:
 
-            raise serializers.ValidationError({
-                'email':
-                    'Invalid email or OTP.'
-            })
+            raise serializers.ValidationError({"email": "Invalid email or OTP."})
 
         if user.is_email_verified:
 
-            raise serializers.ValidationError({
-                'email':
-                    'Email is already verified.'
-            })
+            raise serializers.ValidationError({"email": "Email is already verified."})
 
         if not user.email_otp:
 
-            raise serializers.ValidationError({
-                'otp':
-                    'No OTP found. Please request a new OTP.'
-            })
+            raise serializers.ValidationError(
+                {"otp": "No OTP found. Please request a new OTP."}
+            )
 
         if not user.email_otp_created_at:
 
-            raise serializers.ValidationError({
-                'otp':
-                    'Invalid OTP. Please request a new OTP.'
-            })
+            raise serializers.ValidationError(
+                {"otp": "Invalid OTP. Please request a new OTP."}
+            )
 
-        expiry_time = (
-            user.email_otp_created_at
-            + timedelta(minutes=10)
-        )
+        expiry_time = user.email_otp_created_at + timedelta(minutes=10)
 
         if timezone.now() > expiry_time:
 
-            raise serializers.ValidationError({
-                'otp':
-                    'OTP has expired. Please request a new OTP.'
-            })
+            raise serializers.ValidationError(
+                {"otp": "OTP has expired. Please request a new OTP."}
+            )
 
         if user.email_otp != otp:
 
-            raise serializers.ValidationError({
-                'otp':
-                    'Invalid OTP.'
-            })
+            raise serializers.ValidationError({"otp": "Invalid OTP."})
 
-        data['user'] = user
+        data["user"] = user
 
         return data
 
@@ -184,9 +135,8 @@ class VerifyEmailOTPSerializer(
 # RESEND REGISTER EMAIL OTP
 # =========================================================
 
-class ResendEmailOTPSerializer(
-    serializers.Serializer
-):
+
+class ResendEmailOTPSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
 
@@ -196,47 +146,39 @@ class ResendEmailOTPSerializer(
 
     def validate(self, data):
 
-        email = data['email']
+        email = data["email"]
 
-        user = User.objects.filter(
-            email=email
-        ).first()
+        user = User.objects.filter(email=email).first()
 
         if not user:
 
-            raise serializers.ValidationError({
-                'email':
-                    'No account is waiting to be verified for this email.'
-            })
+            raise serializers.ValidationError(
+                {"email": "No account is waiting to be verified for this email."}
+            )
 
         if user.is_email_verified:
 
-            raise serializers.ValidationError({
-                'email':
-                    'Email is already verified. Please sign in.'
-            })
+            raise serializers.ValidationError(
+                {"email": "Email is already verified. Please sign in."}
+            )
 
         if user.email_otp_created_at:
 
-            next_allowed = (
-                user.email_otp_created_at
-                + self.RESEND_COOLDOWN
-            )
+            next_allowed = user.email_otp_created_at + self.RESEND_COOLDOWN
 
             if timezone.now() < next_allowed:
 
-                seconds = int(
-                    (next_allowed - timezone.now()).total_seconds()
-                ) + 1
+                seconds = int((next_allowed - timezone.now()).total_seconds()) + 1
 
-                raise serializers.ValidationError({
-                    'email':
-                        f'A code was just sent. '
-                        f'Please wait {seconds} second(s) before asking '
-                        f'for another.'
-                })
+                raise serializers.ValidationError(
+                    {
+                        "email": f"A code was just sent. "
+                        f"Please wait {seconds} second(s) before asking "
+                        f"for another."
+                    }
+                )
 
-        data['user'] = user
+        data["user"] = user
 
         return data
 
@@ -244,6 +186,7 @@ class ResendEmailOTPSerializer(
 # =========================================================
 # LOGIN
 # =========================================================
+
 
 class LoginSerializer(TokenObtainPairSerializer):
 
@@ -254,37 +197,28 @@ class LoginSerializer(TokenObtainPairSerializer):
 
         # Check email
         if not email:
-            raise serializers.ValidationError({
-                "email": "Email is required."
-            })
+            raise serializers.ValidationError({"email": "Email is required."})
 
         # Check password
         if not password:
-            raise serializers.ValidationError({
-                "password": "Password is required."
-            })
+            raise serializers.ValidationError({"password": "Password is required."})
 
         # Find and authenticate user
         user = authenticate(
-            request=self.context.get("request"),
-            email=email,
-            password=password
+            request=self.context.get("request"), email=email, password=password
         )
 
         # Wrong email or password
         if user is None:
             print("Authentication failed for email:", email)  # Debugging line
-            raise serializers.ValidationError({
-                "detail": "Invalid email or password."
-            })
+            raise serializers.ValidationError({"detail": "Invalid email or password."})
 
         # Email verification check
         if not user.is_email_verified:
 
-            raise serializers.ValidationError({
-                "email":
-                    "Please verify your email before logging in."
-            })
+            raise serializers.ValidationError(
+                {"email": "Please verify your email before logging in."}
+            )
 
         # Store authenticated user
         self.user = user
@@ -302,61 +236,47 @@ class LoginSerializer(TokenObtainPairSerializer):
 # FORGOT PASSWORD
 # =========================================================
 
-class ForgotPasswordSerializer(
-    serializers.Serializer
-):
+
+class ForgotPasswordSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
 
     def validate_email(self, value):
-        user = User.objects.filter(
-            email=value
-        ).first()
+        user = User.objects.filter(email=value).first()
 
         if not user:
-            raise serializers.ValidationError({
-                'email':
-                    'No user found with this email address.'
-            })
+            raise serializers.ValidationError(
+                {"email": "No user found with this email address."}
+            )
 
         return value
+
 
 # =========================================================
 # VERIFY FORGET PASSWORD EMAIL OTP
 # =========================================================
 
 
-class VerifyPasswordOTPSerializer(
-    serializers.Serializer
-):
+class VerifyPasswordOTPSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
 
-    otp = serializers.CharField(
-        min_length=6,
-        max_length=6
-    )
+    otp = serializers.CharField(min_length=6, max_length=6)
 
     def validate(self, data):
 
-        email = data['email']
-        otp = data['otp']
+        email = data["email"]
+        otp = data["otp"]
 
         # --------------------------------
         # Find user
         # --------------------------------
 
-        user = User.objects.filter(
-            email=email
-        ).first()
+        user = User.objects.filter(email=email).first()
 
         if not user:
 
-            raise serializers.ValidationError({
-                'email':
-                    'Invalid email or OTP.'
-            })
-
+            raise serializers.ValidationError({"email": "Invalid email or OTP."})
 
         # --------------------------------
         # Check OTP exists
@@ -364,11 +284,9 @@ class VerifyPasswordOTPSerializer(
 
         if not user.password_reset_otp:
 
-            raise serializers.ValidationError({
-                'otp':
-                    'No OTP found. Please request a new OTP.'
-            })
-
+            raise serializers.ValidationError(
+                {"otp": "No OTP found. Please request a new OTP."}
+            )
 
         # --------------------------------
         # Check OTP creation time
@@ -376,28 +294,21 @@ class VerifyPasswordOTPSerializer(
 
         if not user.password_reset_otp_created_at:
 
-            raise serializers.ValidationError({
-                'otp':
-                    'Invalid OTP. Please request a new OTP.'
-            })
-
+            raise serializers.ValidationError(
+                {"otp": "Invalid OTP. Please request a new OTP."}
+            )
 
         # --------------------------------
         # Check OTP expiry
         # --------------------------------
 
-        expiry_time = (
-            user.password_reset_otp_created_at
-            + timedelta(minutes=10)
-        )
+        expiry_time = user.password_reset_otp_created_at + timedelta(minutes=10)
 
         if timezone.now() > expiry_time:
 
-            raise serializers.ValidationError({
-                'otp':
-                    'OTP has expired. Please request a new OTP.'
-            })
-
+            raise serializers.ValidationError(
+                {"otp": "OTP has expired. Please request a new OTP."}
+            )
 
         # --------------------------------
         # Check OTP
@@ -405,46 +316,35 @@ class VerifyPasswordOTPSerializer(
 
         if user.password_reset_otp != otp:
 
-            raise serializers.ValidationError({
-                'otp':
-                    'Invalid OTP.'
-            })
-
+            raise serializers.ValidationError({"otp": "Invalid OTP."})
 
         # --------------------------------
         # Store user
         # --------------------------------
 
-        data['user'] = user
+        data["user"] = user
 
         return data
+
 
 # =========================================================
 # RESET PASSWORD FORGET PASSWORD
 # =========================================================
-class ResetPasswordSerializer(
-    serializers.Serializer
-):
+class ResetPasswordSerializer(serializers.Serializer):
 
     reset_token = serializers.CharField()
 
-    password = serializers.CharField(
-        write_only=True
-    )
+    password = serializers.CharField(write_only=True)
 
-    password2 = serializers.CharField(
-        write_only=True
-    )
-
+    password2 = serializers.CharField(write_only=True)
 
     def validate(self, data):
 
-        reset_token = data['reset_token']
+        reset_token = data["reset_token"]
 
-        password = data['password']
+        password = data["password"]
 
-        password2 = data['password2']
-
+        password2 = data["password2"]
 
         # =================================
         # Check password confirmation
@@ -452,28 +352,19 @@ class ResetPasswordSerializer(
 
         if password != password2:
 
-            raise serializers.ValidationError({
-                'password2':
-                    'Passwords do not match.'
-            })
-
+            raise serializers.ValidationError({"password2": "Passwords do not match."})
 
         # =================================
         # Find user by reset token
         # =================================
 
-        user = User.objects.filter(
-            password_reset_token=reset_token
-        ).first()
-
+        user = User.objects.filter(password_reset_token=reset_token).first()
 
         if not user:
 
-            raise serializers.ValidationError({
-                'reset_token':
-                    'Invalid or expired reset token.'
-            })
-
+            raise serializers.ValidationError(
+                {"reset_token": "Invalid or expired reset token."}
+            )
 
         # =================================
         # Check token creation time
@@ -481,109 +372,77 @@ class ResetPasswordSerializer(
 
         if not user.password_reset_token_created_at:
 
-            raise serializers.ValidationError({
-                'reset_token':
-                    'Invalid or expired reset token.'
-            })
-
+            raise serializers.ValidationError(
+                {"reset_token": "Invalid or expired reset token."}
+            )
 
         # =================================
         # Token expires after 10 minutes
         # =================================
 
-        expiry_time = (
-            user.password_reset_token_created_at
-            + timedelta(minutes=10)
-        )
-
+        expiry_time = user.password_reset_token_created_at + timedelta(minutes=10)
 
         if timezone.now() > expiry_time:
 
-            raise serializers.ValidationError({
-                'reset_token':
-                    'Reset token has expired. Please request a new OTP.'
-            })
-
+            raise serializers.ValidationError(
+                {"reset_token": "Reset token has expired. Please request a new OTP."}
+            )
 
         # =================================
         # Validate password
         # =================================
 
-        validate_password(
-            password,
-            user=user
-        )
-
+        validate_password(password, user=user)
 
         # =================================
         # Store user
         # =================================
 
-        data['user'] = user
+        data["user"] = user
 
         return data
+
 
 # =========================================================
 # CHANGE PASSWORD
 # =========================================================
 
-class ChangePasswordSerializer(
-    serializers.Serializer
-):
 
-    current_password = serializers.CharField(
-        write_only=True
-    )
+class ChangePasswordSerializer(serializers.Serializer):
 
-    new_password = serializers.CharField(
-        write_only=True
-    )
+    current_password = serializers.CharField(write_only=True)
 
-    new_password2 = serializers.CharField(
-        write_only=True
-    )
+    new_password = serializers.CharField(write_only=True)
 
-    def validate_current_password(
-        self,
-        value
-    ):
+    new_password2 = serializers.CharField(write_only=True)
 
-        user = self.context[
-            'request'
-        ].user
+    def validate_current_password(self, value):
+
+        user = self.context["request"].user
 
         if not user.check_password(value):
 
-            raise serializers.ValidationError(
-                'Current password is incorrect.'
-            )
+            raise serializers.ValidationError("Current password is incorrect.")
 
         return value
 
     def validate(self, data):
 
-        if (
-            data['new_password']
-            != data['new_password2']
-        ):
+        if data["new_password"] != data["new_password2"]:
 
-            raise serializers.ValidationError({
-                'new_password2':
-                    'Passwords do not match.'
-            })
+            raise serializers.ValidationError(
+                {"new_password2": "Passwords do not match."}
+            )
 
-        validate_password(
-            data['new_password'],
-            user=self.context[
-                'request'
-            ].user
-        )
+        validate_password(data["new_password"], user=self.context["request"].user)
 
         return data
+
 
 # =========================================================
 # USER
 # =========================================================
+
 
 class UserSerializer(serializers.ModelSerializer):
 
@@ -592,18 +451,18 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
 
         fields = [
-            'id',
-            'email',
-            'first_name',
-            'last_name',
-            'phone',
-            'date_joined',
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "phone",
+            "date_joined",
         ]
 
         read_only_fields = [
-            'id',
-            'email',
-            'date_joined',
+            "id",
+            "email",
+            "date_joined",
         ]
 
 
@@ -619,45 +478,34 @@ class AddressSerializer(serializers.ModelSerializer):
         model = Address
 
         fields = [
-            'id',
-            'first_name',
-            'last_name',
-            'company',
-            'address1',
-            'address2',
-            'city',
-            'postal_code',
-            'country',
-            'region',
-            'created_at',
-            'updated_at',
+            "id",
+            "first_name",
+            "last_name",
+            "company",
+            "address1",
+            "address2",
+            "city",
+            "postal_code",
+            "country",
+            "region",
+            "created_at",
+            "updated_at",
         ]
 
         read_only_fields = [
-            'id',
-            'created_at',
-            'updated_at',
-        ]   
+            "id",
+            "created_at",
+            "updated_at",
+        ]
 
     def create(self, validated_data):
-        user = self.context['request'].user
+        user = self.context["request"].user
 
         if Address.objects.filter(user=user).exists():
-            raise serializers.ValidationError({
-                "address": "You already have an address."
-            })
+            raise serializers.ValidationError(
+                {"address": "You already have an address."}
+            )
 
-        address = Address.objects.create(
-            **validated_data
-        )
+        address = Address.objects.create(**validated_data)
 
         return address
-
-
-
-
-
-
-
-
-
