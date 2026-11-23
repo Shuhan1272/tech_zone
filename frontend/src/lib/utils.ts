@@ -25,6 +25,23 @@ export const number = (value: unknown) =>
   Number(value ?? 0);
 
 // ============================================================
+// SHIPPING
+// ============================================================
+
+/**
+ * Shipping is 10% of each product's selling price.
+ * Mirrors calculate_shipping() in Backend/order/services.py,
+ * which decides the amount actually charged on the order.
+ */
+
+export const SHIPPING_RATE = 0.1;
+
+export const shippingFor = (subtotal: number) =>
+  subtotal > 0
+    ? Math.round(subtotal * SHIPPING_RATE * 100) / 100
+    : 0;
+
+// ============================================================
 // API RESPONSE UTILITIES
 // ============================================================
 

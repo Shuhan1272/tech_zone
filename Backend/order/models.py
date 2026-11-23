@@ -151,6 +151,13 @@ class Order(models.Model):
         default=0
     )
 
+    # 10% of the product subtotal, stored when the order is placed.
+    shipping_charge = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
     total_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2

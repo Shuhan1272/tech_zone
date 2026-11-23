@@ -1,4 +1,6 @@
 
+from decimal import Decimal, ROUND_HALF_UP
+
 from django.db import transaction
 from django.db.models import F
 
@@ -8,6 +10,28 @@ from products.models import ProductVariant
 from discounts.models import Discount
 
 from .models import Order
+
+
+# =========================================================
+# SHIPPING CHARGE
+# =========================================================
+
+# Shipping is 10% of each product's selling price, i.e. 10% of the
+# product subtotal (before any promo/staff discount code).
+SHIPPING_RATE = Decimal('0.10')
+
+
+def calculate_shipping(subtotal):
+
+    subtotal = Decimal(str(subtotal or 0))
+
+    if subtotal <= 0:
+        return Decimal('0.00')
+
+    return (subtotal * SHIPPING_RATE).quantize(
+        Decimal('0.01'),
+        rounding=ROUND_HALF_UP
+    )
 
 
 # =========================================================

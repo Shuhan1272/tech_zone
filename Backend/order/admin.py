@@ -297,6 +297,7 @@ class OrderAdmin(admin.ModelAdmin):
         "discount",
         "discount_code",
         "discount_amount",
+        "shipping_charge",
         "total_amount",
         "created_at",
         "updated_at",
@@ -356,6 +357,7 @@ class OrderAdmin(admin.ModelAdmin):
                     "discount",
                     "discount_code",
                     "discount_amount",
+                    "shipping_charge",
                     "total_amount",
                 ]
             },

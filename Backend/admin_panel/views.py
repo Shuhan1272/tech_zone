@@ -4,7 +4,7 @@ import hashlib
 import json
 from collections import defaultdict
 from datetime import timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import authenticate
@@ -27,6 +27,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from order.models import Order, OrderItem
 from payments.services import GatewayError
+from products.models import FlatDiscount, ProductVariant
 
 from .deletion import DeletionPlan
 from .forms import form_for
@@ -86,6 +87,7 @@ def workspace(request):
             "is_superuser": user.is_superuser,
             "role": "Workspace owner" if user.is_superuser else "Staff member",
             "can_overview": permitted(user, resources["orders"]),
+            "can_flat_discount": permitted(user, resources["variants"]),
             "sections": sections,
             **workspace_insights(user),
         }
@@ -421,6 +423,79 @@ def execute_action(key, obj, action, user, note):
             " ".join(exc.messages) if isinstance(exc, DjangoError) else str(exc)
         )
     audit(user, obj, CHANGE, action.replace("_", " ").capitalize())
+
+
+def flat_discount_state(user):
+    obj = FlatDiscount.objects.select_related("updated_by").filter(pk=1).first()
+    percentage = obj.percentage if obj else Decimal("0.00")
+    return {
+        "percentage": percentage,
+        "active": percentage > 0,
+        "updated_at": obj.updated_at if obj else None,
+        "updated_by": obj.updated_by.email if obj and obj.updated_by else None,
+        "variant_count": ProductVariant.objects.filter(
+            is_active=True, product__is_active=True
+        ).count(),
+        "can_change": permitted(user, resources["variants"], "change"),
+    }
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsActiveStaff])
+def flat_discount(request):
+    """Store-wide percentage discount (e.g. 30% off everything).
+
+    Applying it never edits a variant's own discount_percentage, so a reset
+    brings every product's previous discount back automatically.
+    """
+    user = request.user
+    resource = resource_for("variants", user)
+    if request.method == "GET":
+        return Response(flat_discount_state(user))
+    if not permitted(user, resource, "change"):
+        raise PermissionDenied()
+
+    action = request.data.get("action")
+    if action not in {"apply", "reset"}:
+        raise ValidationError({"action": "Choose apply or reset."})
+
+    with transaction.atomic():
+        FlatDiscount.objects.get_or_create(pk=1)
+        obj = FlatDiscount.objects.select_for_update().get(pk=1)
+        if action == "reset":
+            if obj.percentage == 0:
+                raise ValidationError({"percentage": "No flat discount is running."})
+            previous = obj.percentage
+            obj.percentage = Decimal("0.00")
+            message = f"Reset flat discount (was {previous.normalize():f}%)"
+        else:
+            try:
+                percentage = Decimal(
+                    str(request.data.get("percentage", "")).strip()
+                )
+            except (InvalidOperation, ValueError):
+                raise ValidationError({"percentage": "Enter a valid percentage."})
+            if not percentage.is_finite() or percentage <= 0:
+                raise ValidationError(
+                    {"percentage": "Percentage must be greater than 0."}
+                )
+            # 100% would make every product free.
+            if percentage >= 100:
+                raise ValidationError(
+                    {"percentage": "Percentage must be less than 100."}
+                )
+            if percentage != percentage.quantize(Decimal("0.01")):
+                raise ValidationError(
+                    {"percentage": "Use at most two decimal places."}
+                )
+            obj.percentage = percentage
+            message = (
+                f"Applied flat discount of {percentage.normalize():f}% to all products"
+            )
+        obj.updated_by = user
+        obj.save()
+        audit(user, obj, CHANGE, message)
+    return Response(flat_discount_state(user))
 
 
 @api_view(["GET"])

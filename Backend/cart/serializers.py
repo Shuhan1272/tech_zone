@@ -192,6 +192,10 @@ class CartSerializer(serializers.ModelSerializer):
 
     total_price = serializers.SerializerMethodField()
 
+    shipping_charge = serializers.SerializerMethodField()
+
+    estimated_total = serializers.SerializerMethodField()
+
     class Meta:
         model = Cart
 
@@ -200,6 +204,8 @@ class CartSerializer(serializers.ModelSerializer):
             'items',
             'total_items',
             'total_price',
+            'shipping_charge',
+            'estimated_total',
             'created_at',
             'updated_at',
         ]
@@ -209,6 +215,8 @@ class CartSerializer(serializers.ModelSerializer):
             'items',
             'total_items',
             'total_price',
+            'shipping_charge',
+            'estimated_total',
             'created_at',
             'updated_at',
         ]
@@ -228,9 +236,9 @@ class CartSerializer(serializers.ModelSerializer):
     # TOTAL PRICE
     # =====================================================
 
-    def get_total_price(self, obj):
+    def _subtotal(self, obj):
 
-        total = sum(
+        return sum(
             (
                 item.variant.discounted_price *
                 item.quantity
@@ -238,4 +246,27 @@ class CartSerializer(serializers.ModelSerializer):
             for item in obj.items.all()
         )
 
-        return str(round(total, 2))
+    def get_total_price(self, obj):
+
+        return str(round(self._subtotal(obj), 2))
+
+    # =====================================================
+    # SHIPPING (10% of product subtotal)
+    # =====================================================
+
+    def get_shipping_charge(self, obj):
+
+        from order.services import calculate_shipping
+
+        return str(calculate_shipping(self._subtotal(obj)))
+
+    def get_estimated_total(self, obj):
+
+        from order.services import calculate_shipping
+
+        subtotal = self._subtotal(obj)
+
+        return str(round(
+            subtotal + calculate_shipping(subtotal),
+            2
+        ))

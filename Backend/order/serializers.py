@@ -111,6 +111,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'discount',
             'discount_code',
             'discount_amount',
+            'shipping_charge',
             'total_amount',
 
             'status',

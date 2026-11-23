@@ -12,6 +12,7 @@ from .models import (
     ProductVariant,
     Category,
     Brand,
+    FlatDiscount,
 )
 
 
@@ -302,8 +303,17 @@ class ProductFilter(django_filters.FilterSet):
         discounted_variants = ProductVariant.objects.filter(
             product_id=OuterRef('pk'),
             is_active=True,
-            discount_percentage__gt=0
         )
+
+        # A running flat discount puts every priced variant on sale.
+        if FlatDiscount.current_percentage() > 0:
+            discounted_variants = discounted_variants.filter(
+                price__gt=0
+            )
+        else:
+            discounted_variants = discounted_variants.filter(
+                discount_percentage__gt=0
+            )
 
         queryset = queryset.annotate(
             _has_discount=Exists(discounted_variants)

@@ -6,6 +6,7 @@ urlpatterns = [
     path("workspace/", views.workspace),
     path("permissions/", views.permission_catalog),
     path("overview/", views.overview),
+    path("flat-discount/", views.flat_discount),
     path("resources/<slug:key>/", views.listing),
     path("resources/<slug:key>/new/", views.record),
     path("resources/<slug:key>/<int:pk>/", views.record),

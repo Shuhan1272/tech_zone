@@ -1,4 +1,7 @@
 
+from decimal import Decimal, ROUND_HALF_UP
+
+from django.core.cache import cache
 from django.core.validators import (
     MinValueValidator,
     MaxValueValidator,
@@ -245,15 +248,33 @@ class ProductVariant(TimeStampedModel):
     # Discounted Price
     # =====================================================
 
+    # While a store-wide flat discount percentage is active it
+    # replaces the variant's own percentage discount. The stored
+    # discount_percentage is never modified, so resetting the flat
+    # discount automatically restores every variant's own discount.
+
     @property
     def discounted_price(self):
-        discount = (
-            self.price *
-            self.discount_percentage /
-            100
+        price = Decimal(str(self.price or 0))
+
+        flat = FlatDiscount.current_percentage()
+
+        percentage = (
+            flat
+            if flat > 0
+            else Decimal(str(self.discount_percentage or 0))
         )
 
-        return self.price - discount
+        discount = (
+            price *
+            percentage /
+            Decimal('100')
+        )
+
+        return (price - discount).quantize(
+            Decimal('0.01'),
+            rounding=ROUND_HALF_UP
+        )
 
     # =====================================================
     # Saved Price
@@ -262,9 +283,8 @@ class ProductVariant(TimeStampedModel):
     @property
     def saved_price(self):
         return (
-            self.price *
-            self.discount_percentage /
-            100
+            Decimal(str(self.price or 0)) -
+            self.discounted_price
         )
 
     # =====================================================
@@ -457,6 +477,77 @@ class ProductReview(TimeStampedModel):
 
     def __str__(self):
         return f'{self.product.name} - {self.rating}/5'
+
+
+# =========================================================
+# Store-wide Flat Discount (singleton)
+# =========================================================
+
+class FlatDiscount(models.Model):
+    """A percentage taken off every product variant (e.g. 30%).
+
+    Only one row (pk=1) exists. A percentage of 0 means no flat
+    discount is running and each variant uses its own percentage.
+    """
+
+    CACHE_KEY = 'products:flat_discount_percentage'
+    CACHE_SECONDS = 30
+
+    percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(100)
+        ]
+    )
+
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+'
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'flat discount'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+        cache.delete(self.CACHE_KEY)
+
+    @classmethod
+    def load(cls):
+        obj, _created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @classmethod
+    def current_percentage(cls):
+        percentage = cache.get(cls.CACHE_KEY)
+
+        if percentage is None:
+            percentage = (
+                cls.objects
+                .filter(pk=1)
+                .values_list('percentage', flat=True)
+                .first()
+            ) or Decimal('0.00')
+
+            cache.set(
+                cls.CACHE_KEY,
+                percentage,
+                cls.CACHE_SECONDS
+            )
+
+        return Decimal(str(percentage))
+
+    def __str__(self):
+        return f'Flat discount: {self.percentage}%'
 
 
 class Color(TimeStampedModel):

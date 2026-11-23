@@ -5,6 +5,9 @@ import { Login } from './Login';
 import { Overview } from './Overview';
 import { Editor } from './Editor';
 import { Collection } from './Collection';
+import { FlatDiscount } from './FlatDiscount';
+
+const FLAT_DISCOUNT = 'flat-discount';
 
 type Workspace = {
   sections: Section[];
@@ -12,6 +15,7 @@ type Workspace = {
   name?: string;
   role?: string;
   can_overview?: boolean;
+  can_flat_discount?: boolean;
   is_superuser?: boolean;
 };
 
@@ -96,8 +100,14 @@ export function Console() {
   const analytics = workspace?.can_overview ?? sections.some((section) => section.key === 'orders');
   const [recordRoute, queryString = ''] = route.split('?');
   const [key, id] = recordRoute.split('/');
-  const section =
-    sections.find((item) => item.key === key) || (!analytics ? sections[0] : undefined);
+  const flatPage = key === FLAT_DISCOUNT && !!workspace?.can_flat_discount;
+  const showFlatNav =
+    !!workspace?.can_flat_discount &&
+    (!navigationSearch ||
+      'flat discount pricing'.includes(navigationSearch.toLowerCase()));
+  const section = flatPage
+    ? undefined
+    : sections.find((item) => item.key === key) || (!analytics ? sections[0] : undefined);
   const name = workspace?.name || workspace?.email?.split('@')[0] || 'Team member';
   const role = workspace?.role || 'Staff workspace';
   const groups = Array.from(new Set(sections.map((item) => item.group)));
@@ -173,16 +183,30 @@ export function Console() {
               <div className="nav-group">
                 <small>Workspace</small>
                 <button
-                  className={!section ? 'active' : ''}
-                  aria-current={!section ? 'page' : undefined}
+                  className={!section && !flatPage ? 'active' : ''}
+                  aria-current={!section && !flatPage ? 'page' : undefined}
                   onClick={() => go('overview')}
                 >
                   <Icon name="overview" />
                   <span>Overview</span>
-                  {!section && <i />}
+                  {!section && !flatPage && <i />}
                 </button>
               </div>
             )}
+          {showFlatNav && (
+            <div className="nav-group">
+              <small>Pricing</small>
+              <button
+                className={flatPage ? 'active' : ''}
+                aria-current={flatPage ? 'page' : undefined}
+                onClick={() => go(FLAT_DISCOUNT)}
+              >
+                <Icon name="discounts" />
+                <span>Flat discount</span>
+                {flatPage && <i />}
+              </button>
+            </div>
+          )}
           {groups.map((group) => {
             const items = filteredSections.filter((item) => item.group === group);
             return items.length ? (
@@ -205,6 +229,7 @@ export function Console() {
           })}
           {navigationSearch &&
             !filteredSections.length &&
+            !showFlatNav &&
             !'overview dashboard'.includes(navigationSearch.toLowerCase()) && (
               <p className="nav-empty">No matching sections.</p>
             )}
@@ -239,7 +264,7 @@ export function Console() {
             </button>
             <span>Workspace</span>
             <Icon name="chevron" />
-            <b>{section?.title || 'Overview'}</b>
+            <b>{flatPage ? 'Flat discount' : section?.title || 'Overview'}</b>
           </div>
           <div className="top-account">
             <time className="today" dateTime={new Date().toISOString().slice(0, 10)}>
@@ -270,6 +295,8 @@ export function Console() {
                 <p>Opening your workspace…</p>
               </div>
             )
+          ) : flatPage ? (
+            <FlatDiscount notify={setMessage} />
           ) : section ? (
             <Collection
               key={`${section.key}?${queryString}`}

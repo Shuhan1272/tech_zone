@@ -29,7 +29,7 @@ resources = {
         "Orders",
         "shipping_name status payment_status total_amount",
         "shipping_name shipping_phone user__email",
-        extra="user payment_method subtotal discount_amount discount_code shipping_phone shipping_address shipping_house shipping_road shipping_division shipping_district shipping_upazila shipping_postal_code shipping_instructions created_at",
+        extra="user payment_method subtotal discount_amount discount_code shipping_charge shipping_phone shipping_address shipping_house shipping_road shipping_division shipping_district shipping_upazila shipping_postal_code shipping_instructions created_at",
         delete=False,
     ),
     "payments": Resource(

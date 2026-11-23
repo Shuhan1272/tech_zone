@@ -26,7 +26,7 @@ from .serializers import (
     OrderSerializer,
 )
 
-from .services import cancel_order
+from .services import calculate_shipping, cancel_order
 
 
 # =========================================================
@@ -201,8 +201,14 @@ class CheckoutView(generics.GenericAPIView):
                 subtotal
             )
 
+            shipping_charge = calculate_shipping(
+                subtotal
+            )
+
             total_amount = (
-                subtotal - discount_amount
+                subtotal
+                - discount_amount
+                + shipping_charge
             )
 
             if total_amount < 0:
@@ -339,6 +345,8 @@ class CheckoutView(generics.GenericAPIView):
                 ),
 
                 discount_amount=discount_amount,
+
+                shipping_charge=shipping_charge,
 
                 total_amount=total_amount,
 

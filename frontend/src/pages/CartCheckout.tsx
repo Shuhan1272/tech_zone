@@ -30,6 +30,7 @@ import {
   absoluteMedia,
   errorMessage,
   money,
+  shippingFor,
   validateGatewayUrl,
 } from '../lib/utils';
 
@@ -332,6 +333,19 @@ function getSavings(item: CartItem): number {
   );
 }
 
+function ShippingLine({ amount }: { amount: number }) {
+  return (
+    <div className="summary-line shipping-line">
+      <span>
+        Shipping
+        <small className="shipping-rate">10% of item price</small>
+      </span>
+
+      <strong>+{money(amount)}</strong>
+    </div>
+  );
+}
+
 function CartProductImage({
   image,
   name,
@@ -499,6 +513,8 @@ export function CartPage() {
       total + getItemPrice(item) * item.quantity,
     0
   );
+
+  const shippingCharge = shippingFor(subtotal);
 
   const unavailableItems = items.filter((item) => {
     const variant = getVariantDisplay(item);
@@ -946,12 +962,7 @@ export function CartPage() {
               </strong>
             </div>
 
-            <div className="summary-line">
-              <span>Shipping</span>
-              <span>
-                Calculated at checkout
-              </span>
-            </div>
+            <ShippingLine amount={shippingCharge} />
 
             <div className="summary-divider" />
 
@@ -959,7 +970,7 @@ export function CartPage() {
               <span>Estimated total</span>
 
               <strong>
-                {money(subtotal)}
+                {money(subtotal + shippingCharge)}
               </strong>
             </div>
 
@@ -1076,10 +1087,13 @@ export function Checkout() {
     );
   });
 
-  const estimatedTotal = Math.max(
-    0,
-    subtotal - (appliedDiscount?.subtotal === subtotal ? (discount ?? 0) : 0)
-  );
+  const shippingCharge = shippingFor(subtotal);
+
+  const estimatedTotal =
+    Math.max(
+      0,
+      subtotal - (appliedDiscount?.subtotal === subtotal ? (discount ?? 0) : 0)
+    ) + shippingCharge;
 
   // =======================================================
   // LOAD SAVED ADDRESS
@@ -2057,10 +2071,7 @@ export function Checkout() {
             </div>
           )}
 
-          <div className="summary-line">
-            <span>Shipping</span>
-            <span>Confirmed by store</span>
-          </div>
+          <ShippingLine amount={shippingCharge} />
 
           <div className="summary-divider" />
 

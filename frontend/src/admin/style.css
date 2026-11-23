@@ -2484,3 +2484,114 @@ table {
     display: none;
   }
 }
+
+/* Flat discount */
+.flat-discount {
+  display: grid;
+  gap: 16px;
+  max-width: 820px;
+}
+.flat-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+}
+.flat-status.is-on {
+  border-color: #b7e4d4;
+  background: #f3fbf8;
+}
+.flat-status small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.flat-status strong {
+  display: block;
+  margin: 3px 0 6px;
+  font-size: 20px;
+  color: #16293c;
+}
+.flat-status p {
+  margin: 0;
+  color: #5b6879;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.flat-form {
+  padding: 20px;
+}
+.flat-form label,
+.flat-reset > div {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.flat-form label small,
+.flat-reset small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.flat-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.flat-input > span {
+  font-weight: 700;
+  color: #465367;
+}
+.flat-input input {
+  flex: 1 1 180px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #dce3ea;
+  border-radius: 7px;
+  font-size: 15px;
+}
+.flat-input input:focus {
+  outline: 2px solid #087f6833;
+  border-color: var(--primary);
+}
+.flat-input input[aria-invalid] {
+  border-color: #b85a59;
+}
+.flat-warning,
+.flat-preview {
+  margin: 10px 0 0;
+  font-size: 12px;
+}
+.flat-warning {
+  color: #a04444;
+}
+.flat-preview {
+  color: #087f68;
+}
+.flat-reset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.flat-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.flat-quick button {
+  min-height: 32px;
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+.flat-quick button.active {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}

@@ -1221,6 +1221,13 @@ export function OrderDetail() {
             </strong>
           </div>
 
+          <div className="summary-line">
+            <span>Shipping</span>
+            <strong>
+              +{money(order.shipping_charge ?? 0)}
+            </strong>
+          </div>
+
           <div className="summary-divider" />
 
           <div className="summary-total">

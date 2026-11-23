@@ -125,6 +125,7 @@ export interface Order {
   subtotal: string;
   discount_amount?: string;
   discount_code?: string;
+  shipping_charge?: string;
   total_amount: string;
   status: string;
   payment_status: string;

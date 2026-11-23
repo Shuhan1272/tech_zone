@@ -125,6 +125,7 @@ def order_email_notification(
                 f"{products}\n\n"
                 f"Subtotal: BDT {order.subtotal:,.2f}\n"
                 f"Discount: BDT {order.discount_amount:,.2f}\n"
+                f"Shipping: BDT {order.shipping_charge:,.2f}\n"
                 f"Total: BDT {order.total_amount:,.2f}\n\n"
                 f"{payment_note}\n\n"
                 f"Shipping Address:\n"

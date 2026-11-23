@@ -15,6 +15,8 @@ import {
   Button,
 } from '../components/UI';
 
+import { CatalogSpotlight } from '../components/CatalogSpotlight';
+
 import { api, endpoints, withQuery } from '../lib/api';
 
 import {
@@ -768,8 +770,8 @@ export function Catalog() {
           CATALOG HEADING
       ====================================================== */}
 
-      <div className="catalog-heading">
-        <div>
+      <div className="catalog-heading has-spotlight">
+        <div className="catalog-heading-text">
           <div className="eyebrow">
             THE TECHZONE COLLECTION
           </div>
@@ -784,13 +786,19 @@ export function Catalog() {
           <p>
             Find the right technology for your everyday.
           </p>
+
+          <div className="catalog-count">
+            {list.loading
+              ? 'Loading...'
+              : `${list.data.count.toLocaleString()} products`}
+          </div>
         </div>
 
-        <div className="catalog-count">
-          {list.loading
-            ? 'Loading...'
-            : `${list.data.count.toLocaleString()} products`}
-        </div>
+        {/* Deals and trending products of this category */}
+        <CatalogSpotlight
+          category={params.get('category') || undefined}
+          images={images}
+        />
       </div>
 
       {/* ======================================================
