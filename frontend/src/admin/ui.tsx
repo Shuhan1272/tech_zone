@@ -25,7 +25,7 @@ const paths: Record<string, string> = {
   addresses: 'M19 9c0 5-7 12-7 12S5 14 5 9a7 7 0 1114 0 M15 9a3 3 0 11-6 0 3 3 0 016 0',
   carts: 'M2 3h3l3 13h11l3-9H6 M9 21h.01 M18 21h.01',
   wishlists: 'M20 5c-4-4-8 1-8 1S8 1 4 5c-5 5 8 15 8 15s13-10 8-15',
-  'PC builder': 'M3 3h18v13H3z M12 16v5 M8 21h8',
+  'PC Builder': 'M3 3h18v13H3z M12 16v5 M8 21h8',
   builds: 'M3 3h18v13H3z M12 16v5 M8 21h8',
   mappings: 'M4 4h6v6H4z M14 14h6v6h-6z M7 10v7h7 M10 7h7v7',
   Administration: 'M12 3l9 4v5c0 5-9 10-9 10S3 17 3 12V7z M8 12l3 3 5-6',
@@ -97,7 +97,7 @@ export function ErrorBox({ message }: { message: string }) {
 
 const booleanLabels: Record<string, [string, string]> = {
   is_active: ['Active', 'Inactive'],
-  is_approved: ['Approved', 'Pending review'],
+  is_approved: ['Approved', 'Pending Review'],
   is_featured: ['Featured', 'Standard'],
   is_email_verified: ['Verified', 'Unverified'],
   is_staff: ['Staff', 'Customer'],
@@ -107,7 +107,7 @@ const booleanLabels: Record<string, [string, string]> = {
 };
 
 export function display(key: string, value: unknown): ReactNode {
-  if (value == null || value === '') return key === 'last_login' ? 'Never signed in' : '—';
+  if (value == null || value === '') return key === 'last_login' ? 'Never Signed in' : '—';
 
   if (typeof value === 'boolean' || ['status', 'payment_status', 'availability'].includes(key)) {
     const text =
@@ -213,7 +213,7 @@ export function Grid({
           <span className="empty-icon">
             <Icon name="Catalog" />
           </span>
-          <strong>No records found</strong>
+          <strong>No Records Found</strong>
           <span>Records matching this view will appear here.</span>
         </div>
       )}

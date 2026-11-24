@@ -87,6 +87,7 @@ type IconName =
   | 'refresh'
   | 'clock'
   | 'credit-card'
+  | 'calendar'
   | 'sliders'
   | 'tag'
   | 'settings'
@@ -446,6 +447,13 @@ export function Icon({
       <>
         <rect x="2" y="5" width="20" height="14" rx="2" />
         <path d="M2 10h20m-16 5h4" />
+      </>
+    ),
+
+    calendar: (
+      <>
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M3 10h18M8 3v4M16 3v4M8 14h2m4 0h2m-8 3h2" />
       </>
     ),
 
@@ -891,8 +899,8 @@ export function ProductCard({
             type="button"
             aria-label={
               inWishlist
-                ? 'Remove from wishlist'
-                : 'Add to wishlist'
+                ? 'Remove from Wishlist'
+                : 'Add to Wishlist'
             }
             title="Wishlist"
             onClick={() => void favorite()}
@@ -905,8 +913,8 @@ export function ProductCard({
             type="button"
             aria-label={
               inCompare
-                ? 'Remove from comparison'
-                : 'Compare product'
+                ? 'Remove from Comparison'
+                : 'Compare Product'
             }
             title="Compare"
             onClick={() =>
@@ -954,7 +962,7 @@ export function ProductCard({
             <strong className="price">
               {variant
                 ? money(price)
-                : 'Price on request'}
+                : 'Price on Request'}
             </strong>
 
             {saved && (
@@ -976,7 +984,7 @@ export function ProductCard({
             }`}
           >
             {inStock
-              ? 'In stock'
+              ? 'In Stock'
               : 'Unavailable'}
           </span>
         </div>
@@ -992,8 +1000,8 @@ export function ProductCard({
           <Icon name="cart" size={17} />
 
           {inStock
-            ? 'Add to cart'
-            : 'Out of stock'}
+            ? 'Add to Cart'
+            : 'Out of Stock'}
         </Button>
       </div>
     </article>

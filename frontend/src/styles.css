@@ -1454,6 +1454,232 @@ main {
   font-size: 12px;
   font-weight: 700;
 }
+.catalog-heading-text .catalog-count {
+  margin-top: 12px;
+}
+
+/* Catalog spotlight: deals and trending products beside the heading */
+.catalog-heading.has-spotlight {
+  align-items: center;
+  gap: 40px;
+}
+.catalog-heading-text {
+  flex: 0 0 auto;
+  max-width: 340px;
+  min-width: 0;
+}
+.spotlight {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 210px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #0f2a6b;
+  box-shadow: 0 10px 28px rgba(29, 75, 194, .18);
+}
+.spotlight-track {
+  display: flex;
+  height: 100%;
+  transition: transform .55s cubic-bezier(.22, .61, .36, 1);
+}
+.spotlight-slide {
+  flex: 0 0 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 280px);
+  align-items: center;
+  gap: 28px;
+  padding: 22px 54px 30px 54px;
+  color: #fff;
+  text-decoration: none;
+  background: linear-gradient(120deg, #1d4bc2 0%, #2762eb 55%, #5b8cff 100%);
+}
+.spotlight-slide.is-trending {
+  background: linear-gradient(120deg, #6d28d9 0%, #9333ea 55%, #c084fc 100%);
+}
+.spotlight-slide.is-new {
+  background: linear-gradient(120deg, #0f766e 0%, #0d9488 55%, #2dd4bf 100%);
+}
+.spotlight-slide:focus-visible {
+  outline: 3px solid #fde68a;
+  outline-offset: -3px;
+}
+.spotlight-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+.spotlight-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fde047;
+  color: #422006;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.spotlight-name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 22px;
+  line-height: 1.25;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.spotlight-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 24px;
+  font-weight: 800;
+}
+.spotlight-price del {
+  font-size: 12px;
+  font-weight: 600;
+  color: #dbe6ff;
+  opacity: .85;
+}
+.spotlight-cta {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e0e9ff;
+}
+.spotlight-slide:hover .spotlight-cta {
+  text-decoration: underline;
+}
+.spotlight-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 164px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .95);
+  overflow: hidden;
+}
+.spotlight-art img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform .3s;
+}
+.spotlight-slide:hover .spotlight-art img {
+  transform: scale(1.06);
+}
+.spotlight-arrow {
+  position: absolute;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .22);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.spotlight-arrow:hover {
+  background: rgba(255, 255, 255, .38);
+}
+.spotlight-arrow.prev {
+  left: 10px;
+}
+.spotlight-arrow.next {
+  right: 10px;
+}
+.spotlight-dots {
+  position: absolute;
+  left: 54px;
+  bottom: 10px;
+  display: flex;
+  gap: 6px;
+}
+.spotlight-dots button {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .45);
+  cursor: pointer;
+  transition: width .25s, background .25s;
+}
+.spotlight-dots button.active {
+  width: 20px;
+  background: #fff;
+}
+@media (max-width: 900px) {
+  .catalog-heading.has-spotlight {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+  }
+  .catalog-heading-text {
+    max-width: none;
+  }
+  .spotlight {
+    flex-basis: auto;
+    width: 100%;
+    height: 180px;
+  }
+  .spotlight-slide {
+    grid-template-columns: minmax(0, 1fr) 150px;
+    gap: 16px;
+    padding: 18px 48px 28px;
+  }
+  .spotlight-art {
+    height: 136px;
+  }
+  .spotlight-name {
+    font-size: 18px;
+  }
+  .spotlight-price {
+    font-size: 20px;
+  }
+  .spotlight-dots {
+    left: 48px;
+  }
+}
+@media (max-width: 560px) {
+  .spotlight {
+    height: 178px;
+  }
+  .spotlight-slide {
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 10px;
+    padding: 14px 16px 30px;
+  }
+  .spotlight-art {
+    height: 110px;
+  }
+  .spotlight-name {
+    font-size: 15px;
+  }
+  .spotlight-price {
+    font-size: 17px;
+  }
+  .spotlight-dots {
+    left: 16px;
+  }
+  /* Too narrow for side arrows; the dots switch slides on phones. */
+  .spotlight-arrow {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-track,
+  .spotlight-art img {
+    transition: none;
+  }
+}
 /* Catalog results alongside the filter sidebar */
 .catalog-layout {
   display: grid;
@@ -2368,6 +2594,74 @@ main {
 .summary-line strong {
   color: #263b5d;
   font-size: 13px;
+}
+.shipping-line > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.shipping-line .shipping-rate {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.summary-line.shipping-line strong {
+  color: #b45309;
+}
+.summary-line.emi-line {
+  margin-top: -10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #eef3ff;
+}
+.summary-line.emi-line strong {
+  color: #1d4bc2;
+}
+.emi-tenure {
+  margin: -2px 0 14px;
+  padding: 14px;
+  border: 1px solid #dbe5ff;
+  border-radius: 10px;
+  background: #f7f9ff;
+}
+.emi-tenure > span {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+.emi-tenure-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.emi-tenure-options button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  border: 1.5px solid #dfe6f2;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.emi-tenure-options button strong {
+  font-size: 13px;
+  color: #13233f;
+}
+.emi-tenure-options button small {
+  font-size: 11px;
+  color: #64748b;
+}
+.emi-tenure-options button.selected {
+  border-color: #2457e7;
+  background: #eef3ff;
+}
+@media (max-width: 520px) {
+  .emi-tenure-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .summary-divider {
   border-top: 1px solid #e5ebf5;

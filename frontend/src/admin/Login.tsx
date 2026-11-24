@@ -45,7 +45,7 @@ export function Login({ done, expired }: { done: () => void; expired: boolean })
             <div>
               <Icon name="team" />
               <span>
-                <b>People & access</b>
+                <b>People & Access</b>
                 <small>Staff status, roles, and permissions</small>
               </span>
               <Icon name="check" />
@@ -53,7 +53,7 @@ export function Login({ done, expired }: { done: () => void; expired: boolean })
             <div>
               <Icon name="orders" />
               <span>
-                <b>Everyday operations</b>
+                <b>Everyday Operations</b>
                 <small>Orders, inventory, and customers</small>
               </span>
               <Icon name="check" />
@@ -61,7 +61,7 @@ export function Login({ done, expired }: { done: () => void; expired: boolean })
             <div>
               <Icon name="activity" />
               <span>
-                <b>A clear view of your store</b>
+                <b>A Clear View of Your Store</b>
                 <small>Performance, activity, and insights</small>
               </span>
               <Icon name="check" />
@@ -81,7 +81,7 @@ export function Login({ done, expired }: { done: () => void; expired: boolean })
             <Icon name="lock" />
           </span>
           <small className="kicker">ADMIN ACCESS</small>
-          <h2>Welcome back.</h2>
+          <h2>Welcome Back.</h2>
           <p>Sign in to manage your TechZone store.</p>
           {expired && (
             <div className="session-notice" role="status">
@@ -89,7 +89,7 @@ export function Login({ done, expired }: { done: () => void; expired: boolean })
             </div>
           )}
           <form onSubmit={submit}>
-            <label htmlFor="admin-email">Email address</label>
+            <label htmlFor="admin-email">Email Address</label>
             <input
               id="admin-email"
               autoComplete="username"
@@ -123,7 +123,7 @@ export function Login({ done, expired }: { done: () => void; expired: boolean })
             </div>
             <ErrorBox message={error} />
             <button className="primary" disabled={busy} type="submit">
-              {busy ? 'Signing in…' : 'Sign in to workspace'}
+              {busy ? 'Signing in…' : 'Sign In to Workspace'}
               <Icon name="arrow" />
             </button>
           </form>

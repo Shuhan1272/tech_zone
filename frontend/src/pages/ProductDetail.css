@@ -890,3 +890,86 @@
 
 
 
+
+/* Payment options: cash price vs 0% EMI */
+.pd-payment-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 22px 0 6px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.pd-payment-options legend {
+  margin-bottom: 10px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #13233f;
+}
+.pd-pay-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  border: 1.5px solid #dfe6f2;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.pd-pay-card:hover {
+  border-color: #9fb7f5;
+}
+.pd-pay-card.selected {
+  border-color: #2457e7;
+  background: #f5f8ff;
+  box-shadow: 0 0 0 3px rgba(36, 87, 231, .12);
+}
+.pd-pay-card input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #2457e7;
+}
+.pd-pay-card:has(input:focus-visible) {
+  outline: 2px solid #2457e7;
+  outline-offset: 2px;
+}
+.pd-pay-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.pd-pay-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 19px;
+  font-weight: 800;
+  color: #13233f;
+}
+.pd-pay-price del {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+.pd-pay-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+.pd-pay-body small {
+  font-size: 11px;
+  color: #64748b;
+}
+@media (max-width: 520px) {
+  .pd-payment-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

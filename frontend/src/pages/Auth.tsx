@@ -66,17 +66,17 @@ function AuthLayout({
           <div className="auth-visual-benefits">
             <div>
               <Icon name="shield-check" size={21} />
-              Secure shopping
+              Secure Shopping
             </div>
 
             <div>
               <Icon name="truck" size={21} />
-              Order tracking
+              Order Tracking
             </div>
 
             <div>
               <Icon name="heart" size={21} />
-              Saved favorites
+              Saved Favorites
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@ function AuthLayout({
         <div className="auth-card">
           <Link to="/" className="auth-back">
             <Icon name="left" size={16} />
-            Back to shop
+            Back to Shop
           </Link>
 
           <div className="auth-card-heading">
@@ -270,13 +270,13 @@ export function Login() {
 
   return (
     <AuthLayout
-      title="Welcome back"
+      title="Welcome Back"
       subtitle="Sign in to your account and pick up right where you left off."
       footer={
         <>
           New to TechZone?{' '}
           <Link to="/register">
-            Create an account
+            Create an Account
           </Link>
         </>
       }
@@ -285,7 +285,7 @@ export function Login() {
         {error && <Notice message={error} />}
 
         <label className="form-field">
-          <span>Email address</span>
+          <span>Email Address</span>
 
           <input
             type="email"
@@ -312,7 +312,7 @@ export function Login() {
           loading={busy}
           className="full-width"
         >
-          Sign in
+          Sign In
           <Icon name="arrow" size={18} />
         </Button>
       </form>
@@ -322,7 +322,7 @@ export function Login() {
           className="auth-extra-link"
           to={`/verify-email?email=${encodeURIComponent(email)}`}
         >
-          Verify your email instead
+          Verify Your Email Instead
         </Link>
       )}
     </AuthLayout>
@@ -392,13 +392,13 @@ export function Register() {
 
   return (
     <AuthLayout
-      title="Create your account"
+      title="Create Your Account"
       subtitle="Join TechZone for a faster, easier way to shop."
       footer={
         <>
           Already have an account?{' '}
           <Link to="/login">
-            Sign in
+            Sign In
           </Link>
         </>
       }
@@ -411,7 +411,7 @@ export function Register() {
 
         <div className="form-two-col">
           <label className="form-field">
-            <span>First name</span>
+            <span>First Name</span>
 
             <input
               required
@@ -420,12 +420,12 @@ export function Register() {
               onChange={e =>
                 change('first_name', e.target.value)
               }
-              placeholder="First name"
+              placeholder="First Name"
             />
           </label>
 
           <label className="form-field">
-            <span>Last name</span>
+            <span>Last Name</span>
 
             <input
               required
@@ -440,7 +440,7 @@ export function Register() {
         </div>
 
         <label className="form-field">
-          <span>Email address</span>
+          <span>Email Address</span>
 
           <input
             required
@@ -455,7 +455,7 @@ export function Register() {
         </label>
 
         <label className="form-field">
-          <span>Phone number</span>
+          <span>Phone Number</span>
 
           <input
             required
@@ -478,7 +478,7 @@ export function Register() {
         />
 
         <PasswordInput
-          label="Confirm password"
+          label="Confirm Password"
           value={fields.password2}
           onChange={v => change('password2', v)}
           autoComplete="new-password"
@@ -489,7 +489,7 @@ export function Register() {
           loading={busy}
           className="full-width"
         >
-          Create account
+          Create Account
           <Icon name="arrow" size={18} />
         </Button>
 
@@ -573,11 +573,11 @@ export function VerifyEmail() {
 
   return (
     <AuthLayout
-      title="Verify your email"
+      title="Verify Your Email"
       subtitle="Enter the six-digit verification code we sent to your inbox."
       footer={
         <Link to="/login">
-          Back to sign in
+          Back to Sign In
         </Link>
       }
     >
@@ -588,7 +588,7 @@ export function VerifyEmail() {
         {error && <Notice message={error} />}
 
         <label className="form-field">
-          <span>Email address</span>
+          <span>Email Address</span>
 
           <input
             type="email"
@@ -601,7 +601,7 @@ export function VerifyEmail() {
         </label>
 
         <label className="form-field">
-          <span>Verification code</span>
+          <span>Verification Code</span>
 
           <input
             required
@@ -623,7 +623,7 @@ export function VerifyEmail() {
           loading={busy}
           className="full-width"
         >
-          Verify email
+          Verify Email
           <Icon name="check" size={18} />
         </Button>
 
@@ -724,10 +724,10 @@ export function ForgotPassword() {
     <AuthLayout
       title={
         step === 1
-          ? 'Reset your password'
+          ? 'Reset Your Password'
           : step === 2
-            ? 'Check your inbox'
-            : 'Choose a new password'
+            ? 'Check Your Inbox'
+            : 'Choose a New Password'
       }
       subtitle={
         step === 1
@@ -738,7 +738,7 @@ export function ForgotPassword() {
       }
       footer={
         <Link to="/login">
-          Back to sign in
+          Back to Sign In
         </Link>
       }
     >
@@ -757,7 +757,7 @@ export function ForgotPassword() {
 
         {step === 1 ? (
           <label className="form-field">
-            <span>Email address</span>
+            <span>Email Address</span>
 
             <input
               type="email"
@@ -791,7 +791,7 @@ export function ForgotPassword() {
         ) : (
           <>
             <PasswordInput
-              label="New password"
+              label="New Password"
               value={password}
               onChange={setPassword}
               autoComplete="new-password"
@@ -800,7 +800,7 @@ export function ForgotPassword() {
             />
 
             <PasswordInput
-              label="Confirm new password"
+              label="Confirm New Password"
               value={password2}
               onChange={setPassword2}
               autoComplete="new-password"
@@ -814,10 +814,10 @@ export function ForgotPassword() {
           className="full-width"
         >
           {step === 1
-            ? 'Send recovery code'
+            ? 'Send Recovery Code'
             : step === 2
-              ? 'Verify code'
-              : 'Reset password'}
+              ? 'Verify Code'
+              : 'Reset Password'}
 
           <Icon name="arrow" size={18} />
         </Button>
@@ -828,7 +828,7 @@ export function ForgotPassword() {
             className="text-action"
             onClick={() => setStep(1)}
           >
-            Resend code
+            Resend Code
           </button>
         )}
       </form>

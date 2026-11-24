@@ -81,10 +81,10 @@ export function Collection({ section, open, revision, initialFilters = {} }: Pro
     section.key === 'roles' ? ['name', 'permission_count', 'member_count'] : data?.columns || [];
   const createLabel =
     section.key === 'team'
-      ? 'Add staff member'
+      ? 'Add Staff Member'
       : section.key === 'roles'
-        ? 'Create role'
-        : 'Add record';
+        ? 'Create Role'
+        : 'Add Record';
 
   function resetFilters() {
     setQuery('');
@@ -108,7 +108,7 @@ export function Collection({ section, open, revision, initialFilters = {} }: Pro
             disabled={!data?.rows.length || loading || Boolean(error)}
             onClick={() => data && downloadRecords(data.rows, columns, section.key)}
           >
-            <Icon name="download" /> Export page
+            <Icon name="download" /> Export Page
           </button>
           {data?.create && (
             <button className="primary" onClick={() => open('new')}>
@@ -121,9 +121,9 @@ export function Collection({ section, open, revision, initialFilters = {} }: Pro
       {section.key === 'team' && summary && (
         <div className="stat-grid" aria-label="Staff account summary">
           {[
-            ['Total staff', summary.total ?? summary.total_staff ?? data?.count ?? 0, 'team'],
-            ['Active accounts', summary.active ?? summary.active_staff ?? 0, 'shield'],
-            ['Suspended accounts', summary.inactive ?? summary.inactive_staff ?? 0, 'clock'],
+            ['Total Staff', summary.total ?? summary.total_staff ?? data?.count ?? 0, 'team'],
+            ['Active Accounts', summary.active ?? summary.active_staff ?? 0, 'shield'],
+            ['Suspended Accounts', summary.inactive ?? summary.inactive_staff ?? 0, 'clock'],
           ].map(([name, value, icon]) => (
             <div className="status-tile" key={name}>
               <span className="iconbox">
@@ -163,15 +163,15 @@ export function Collection({ section, open, revision, initialFilters = {} }: Pro
           <div>
             <h2>
               {section.key === 'team'
-                ? 'Team directory'
+                ? 'Team Directory'
                 : section.key === 'roles'
-                  ? 'Your roles'
-                  : `All ${section.title.toLowerCase()}`}
+                  ? 'Your Roles'
+                  : `All ${section.title}`}
             </h2>
             <p className="caption">
               {data
                 ? `${data.count.toLocaleString()} ${filtered ? 'matching ' : ''}record${data.count === 1 ? '' : 's'}`
-                : 'Your workspace records'}
+                : 'Your Workspace Records'}
             </p>
           </div>
           <span className="table-hint">Select a record to view details</span>
@@ -219,19 +219,19 @@ export function Collection({ section, open, revision, initialFilters = {} }: Pro
               setPage(1);
             }}
           >
-            <option value="">Newest first</option>
-            <option value="id">Oldest first</option>
+            <option value="">Newest First</option>
+            <option value="id">Oldest First</option>
             {(data?.sortable || data?.columns || [])
               .filter((field) => !['groups', 'permissions', 'id'].includes(field))
               .map((field) => (
                 <option value={field} key={field}>
-                  {label(field)}: ascending
+                  {label(field)}: Ascending
                 </option>
               ))}
           </select>
           {filtered && (
             <button className="link" onClick={resetFilters}>
-              Clear filters
+              Clear Filters
             </button>
           )}
         </div>
@@ -251,14 +251,14 @@ export function Collection({ section, open, revision, initialFilters = {} }: Pro
                   <span className="iconbox">
                     <Icon name={section.key} />
                   </span>
-                  <h3>{filtered ? 'No matching records' : 'A fresh start'}</h3>
+                  <h3>{filtered ? 'No Matching Records' : 'A Fresh Start'}</h3>
                   <p>
                     {filtered
                       ? 'Try another search or clear your filters to see more records.'
                       : `Your ${section.title.toLowerCase()} will appear here.`}
                   </p>
                   {filtered ? (
-                    <button onClick={resetFilters}>Clear filters</button>
+                    <button onClick={resetFilters}>Clear Filters</button>
                   ) : (
                     data.create && (
                       <button className="primary" onClick={() => open('new')}>

@@ -101,7 +101,7 @@ def permission_field(instance, name):
 def form_for(resource, **kwargs):
     klass = modelform_factory(
         resource.model,
-        form=StaffForm if resource.title == "Staff accounts" else ConsoleForm,
+        form=StaffForm if resource.title == "Staff Accounts" else ConsoleForm,
         fields=resource.edit.split(),
     )
     form = klass(**kwargs)

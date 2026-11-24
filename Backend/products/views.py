@@ -5,6 +5,7 @@ from django.db.models import (
     Q,
     F,
     ExpressionWrapper,
+    Value,
     fields,
 )
 
@@ -29,6 +30,7 @@ from .models import (
     Product,
     ProductVariant,
     ProductImage,
+    FlatDiscount,
     ProductQuestion,
     ProductReview,
 )
@@ -104,24 +106,36 @@ class BrandViewSet(viewsets.ModelViewSet):
 
 class ProductViewSet(viewsets.ModelViewSet):
 
-    queryset = (
-        Product.objects.select_related("brand", "category")
-        .prefetch_related("variants")
-        .annotate(
-            price=Min(
-                ExpressionWrapper(
-                    F("variants__price")
-                    - (
-                        F("variants__price")
-                        * F("variants__discount_percentage")
-                        / Decimal("100.0")
-                    ),
-                    output_field=fields.DecimalField(max_digits=12, decimal_places=2),
-                ),
-                filter=Q(variants__is_active=True),
+    queryset = Product.objects.select_related("brand", "category").prefetch_related(
+        "variants"
+    )
+
+    def get_queryset(self):
+
+        # Selling price must match ProductVariant.discounted_price so
+        # price sorting and min/max price filters agree with the cards.
+        flat = FlatDiscount.current_percentage()
+
+        percentage = (
+            Value(flat) if flat > 0 else F("variants__discount_percentage")
+        )
+
+        selling_price = ExpressionWrapper(
+            F("variants__price")
+            - (F("variants__price") * percentage / Decimal("100.0")),
+            output_field=fields.DecimalField(max_digits=12, decimal_places=2),
+        )
+
+        return (
+            super()
+            .get_queryset()
+            .annotate(
+                price=Min(
+                    selling_price,
+                    filter=Q(variants__is_active=True),
+                )
             )
         )
-    )
 
     permission_classes = [IsAdminOrReadOnly]
 

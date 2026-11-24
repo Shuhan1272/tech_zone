@@ -26,7 +26,11 @@ from .serializers import (
     OrderSerializer,
 )
 
-from .services import cancel_order
+from .services import (
+    EMI_MIN_AMOUNT,
+    calculate_shipping,
+    cancel_order,
+)
 
 
 # =========================================================
@@ -51,6 +55,10 @@ class CheckoutView(generics.GenericAPIView):
         data = serializer.validated_data
 
         payment_method = data['payment_method']
+
+        # EMI orders pay the regular price in 0% instalments.
+        emi_months = data.get('emi_months') or None
+        is_emi = emi_months is not None
 
         with transaction.atomic():
 
@@ -140,9 +148,15 @@ class CheckoutView(generics.GenericAPIView):
                         )
                     })
 
-                # Calculate actual selling price
+                # Calculate actual selling price. Product
+                # discounts apply to cash/online payment only;
+                # EMI uses the regular price.
                 unit_price = Decimal(
-                    str(variant.discounted_price)
+                    str(
+                        variant.price
+                        if is_emi
+                        else variant.discounted_price
+                    )
                 ).quantize(
                     Decimal('0.01'),
                     rounding=ROUND_HALF_UP
@@ -201,13 +215,27 @@ class CheckoutView(generics.GenericAPIView):
                 subtotal
             )
 
+            shipping_charge = calculate_shipping(
+                subtotal
+            )
+
             total_amount = (
-                subtotal - discount_amount
+                subtotal
+                - discount_amount
+                + shipping_charge
             )
 
             if total_amount < 0:
                 raise ValidationError({
                     'discount': 'Invalid discount amount.'
+                })
+
+            if is_emi and total_amount < EMI_MIN_AMOUNT:
+                raise ValidationError({
+                    'emi_months': (
+                        f'EMI is available for orders of '
+                        f'BDT {EMI_MIN_AMOUNT:,.0f} or more.'
+                    )
                 })
 
             # =================================================
@@ -340,7 +368,13 @@ class CheckoutView(generics.GenericAPIView):
 
                 discount_amount=discount_amount,
 
+                shipping_charge=shipping_charge,
+
                 total_amount=total_amount,
+
+                is_emi=is_emi,
+
+                emi_months=emi_months,
 
                 # Payment
                 payment_method=payment_method,

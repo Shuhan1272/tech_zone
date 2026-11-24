@@ -5,6 +5,9 @@ import { Login } from './Login';
 import { Overview } from './Overview';
 import { Editor } from './Editor';
 import { Collection } from './Collection';
+import { FlatDiscount } from './FlatDiscount';
+
+const FLAT_DISCOUNT = 'flat-discount';
 
 type Workspace = {
   sections: Section[];
@@ -12,6 +15,7 @@ type Workspace = {
   name?: string;
   role?: string;
   can_overview?: boolean;
+  can_flat_discount?: boolean;
   is_superuser?: boolean;
 };
 
@@ -96,10 +100,15 @@ export function Console() {
   const analytics = workspace?.can_overview ?? sections.some((section) => section.key === 'orders');
   const [recordRoute, queryString = ''] = route.split('?');
   const [key, id] = recordRoute.split('/');
-  const section =
-    sections.find((item) => item.key === key) || (!analytics ? sections[0] : undefined);
-  const name = workspace?.name || workspace?.email?.split('@')[0] || 'Team member';
-  const role = workspace?.role || 'Staff workspace';
+  const flatPage = key === FLAT_DISCOUNT && !!workspace?.can_flat_discount;
+  const showFlatNav =
+    !!workspace?.can_flat_discount &&
+    (!navigationSearch || 'flat discount pricing'.includes(navigationSearch.toLowerCase()));
+  const section = flatPage
+    ? undefined
+    : sections.find((item) => item.key === key) || (!analytics ? sections[0] : undefined);
+  const name = workspace?.name || workspace?.email?.split('@')[0] || 'Team Member';
+  const role = workspace?.role || 'Staff Workspace';
   const groups = Array.from(new Set(sections.map((item) => item.group)));
   const filteredSections = sections.filter((item) =>
     `${item.title} ${item.group}`.toLowerCase().includes(navigationSearch.toLowerCase()),
@@ -132,7 +141,7 @@ export function Console() {
           document.getElementById('workspace-content')?.focus();
         }}
       >
-        Skip to content
+        Skip to Content
       </a>
       {menu && (
         <button className="scrim" aria-label="Close navigation" onClick={() => setMenu(false)} />
@@ -152,13 +161,13 @@ export function Console() {
           <span className="workspace-avatar">TZ</span>
           <span>
             <b>TechZone Store</b>
-            <small>Operations workspace</small>
+            <small>Operations Workspace</small>
           </span>
           <Icon name="chevron" />
         </div>
         <label className="nav-search">
           <Icon name="search" />
-          <span className="sr-only">Find a section</span>
+          <span className="sr-only">Find a Section</span>
           <input
             type="search"
             placeholder="Find a section…"
@@ -173,16 +182,30 @@ export function Console() {
               <div className="nav-group">
                 <small>Workspace</small>
                 <button
-                  className={!section ? 'active' : ''}
-                  aria-current={!section ? 'page' : undefined}
+                  className={!section && !flatPage ? 'active' : ''}
+                  aria-current={!section && !flatPage ? 'page' : undefined}
                   onClick={() => go('overview')}
                 >
                   <Icon name="overview" />
                   <span>Overview</span>
-                  {!section && <i />}
+                  {!section && !flatPage && <i />}
                 </button>
               </div>
             )}
+          {showFlatNav && (
+            <div className="nav-group">
+              <small>Pricing</small>
+              <button
+                className={flatPage ? 'active' : ''}
+                aria-current={flatPage ? 'page' : undefined}
+                onClick={() => go(FLAT_DISCOUNT)}
+              >
+                <Icon name="discounts" />
+                <span>Flat Discount</span>
+                {flatPage && <i />}
+              </button>
+            </div>
+          )}
           {groups.map((group) => {
             const items = filteredSections.filter((item) => item.group === group);
             return items.length ? (
@@ -205,6 +228,7 @@ export function Console() {
           })}
           {navigationSearch &&
             !filteredSections.length &&
+            !showFlatNav &&
             !'overview dashboard'.includes(navigationSearch.toLowerCase()) && (
               <p className="nav-empty">No matching sections.</p>
             )}
@@ -218,7 +242,7 @@ export function Console() {
           <button
             className="logout icon-button"
             aria-label="Sign out"
-            title="Sign out"
+            title="Sign Out"
             onClick={signOut}
           >
             <Icon name="exit" />
@@ -239,7 +263,7 @@ export function Console() {
             </button>
             <span>Workspace</span>
             <Icon name="chevron" />
-            <b>{section?.title || 'Overview'}</b>
+            <b>{flatPage ? 'Flat Discount' : section?.title || 'Overview'}</b>
           </div>
           <div className="top-account">
             <time className="today" dateTime={new Date().toISOString().slice(0, 10)}>
@@ -270,6 +294,8 @@ export function Console() {
                 <p>Opening your workspace…</p>
               </div>
             )
+          ) : flatPage ? (
+            <FlatDiscount notify={setMessage} />
           ) : section ? (
             <Collection
               key={`${section.key}?${queryString}`}
@@ -285,7 +311,7 @@ export function Console() {
               <span className="empty-icon">
                 <Icon name="shield" />
               </span>
-              <h1>Your workspace is ready</h1>
+              <h1>Your Workspace Is Ready</h1>
               <p>
                 Ask your workspace owner to assign a role or permissions so you can start managing
                 your store.
@@ -295,7 +321,7 @@ export function Console() {
           <footer className="workspace-footer">
             <span>© {new Date().getFullYear()} TechZone</span>
             <span>
-              <Icon name="lock" /> Staff operations workspace
+              <Icon name="lock" /> Staff Operations Workspace
             </span>
           </footer>
         </div>

@@ -3,8 +3,8 @@
 import hashlib
 import json
 from collections import defaultdict
-from datetime import timedelta
-from decimal import Decimal
+from datetime import date, timedelta
+from decimal import Decimal, InvalidOperation
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import authenticate
@@ -27,6 +27,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from order.models import Order, OrderItem
 from payments.services import GatewayError
+from products.models import FlatDiscount, ProductVariant
 
 from .deletion import DeletionPlan
 from .forms import form_for
@@ -84,8 +85,9 @@ def workspace(request):
             "email": user.email,
             "name": user.get_full_name() or user.email.split("@", 1)[0],
             "is_superuser": user.is_superuser,
-            "role": "Workspace owner" if user.is_superuser else "Staff member",
+            "role": "Workspace Owner" if user.is_superuser else "Staff Member",
             "can_overview": permitted(user, resources["orders"]),
+            "can_flat_discount": permitted(user, resources["variants"]),
             "sections": sections,
             **workspace_insights(user),
         }
@@ -182,14 +184,14 @@ def filtered_records(request, key, resource):
 
     filters = {}
     if key == "variants":
-        filters["inventory"] = [("low", "Low stock (1–5)"), ("out", "Out of stock")]
+        filters["inventory"] = [("low", "Low Stock (1–5)"), ("out", "Out of Stock")]
         stock = request.query_params.get("inventory")
         if stock == "low":
             records = records.filter(stock__range=(1, 5))
         elif stock == "out":
             records = records.filter(stock=0)
     if key == "questions":
-        filters["unanswered"] = [("1", "Awaiting answer"), ("0", "Answered")]
+        filters["unanswered"] = [("1", "Awaiting Answer"), ("0", "Answered")]
         unanswered = Q(answer="") | Q(answer__isnull=True)
         if request.query_params.get("unanswered") == "1":
             records = records.filter(unanswered)
@@ -423,14 +425,117 @@ def execute_action(key, obj, action, user, note):
     audit(user, obj, CHANGE, action.replace("_", " ").capitalize())
 
 
+def flat_discount_state(user):
+    obj = FlatDiscount.objects.select_related("updated_by").filter(pk=1).first()
+    percentage = obj.percentage if obj else Decimal("0.00")
+    return {
+        "percentage": percentage,
+        "active": percentage > 0,
+        "updated_at": obj.updated_at if obj else None,
+        "updated_by": obj.updated_by.email if obj and obj.updated_by else None,
+        "variant_count": ProductVariant.objects.filter(
+            is_active=True, product__is_active=True
+        ).count(),
+        "can_change": permitted(user, resources["variants"], "change"),
+    }
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsActiveStaff])
+def flat_discount(request):
+    """Store-wide percentage discount (e.g. 30% off everything).
+
+    Applying it never edits a variant's own discount_percentage, so a reset
+    brings every product's previous discount back automatically.
+    """
+    user = request.user
+    resource = resource_for("variants", user)
+    if request.method == "GET":
+        return Response(flat_discount_state(user))
+    if not permitted(user, resource, "change"):
+        raise PermissionDenied()
+
+    action = request.data.get("action")
+    if action not in {"apply", "reset"}:
+        raise ValidationError({"action": "Choose apply or reset."})
+
+    with transaction.atomic():
+        FlatDiscount.objects.get_or_create(pk=1)
+        obj = FlatDiscount.objects.select_for_update().get(pk=1)
+        if action == "reset":
+            if obj.percentage == 0:
+                raise ValidationError({"percentage": "No flat discount is running."})
+            previous = obj.percentage
+            obj.percentage = Decimal("0.00")
+            message = f"Reset flat discount (was {previous.normalize():f}%)"
+        else:
+            try:
+                percentage = Decimal(
+                    str(request.data.get("percentage", "")).strip()
+                )
+            except (InvalidOperation, ValueError):
+                raise ValidationError({"percentage": "Enter a valid percentage."})
+            if not percentage.is_finite() or percentage <= 0:
+                raise ValidationError(
+                    {"percentage": "Percentage must be greater than 0."}
+                )
+            # 100% would make every product free.
+            if percentage >= 100:
+                raise ValidationError(
+                    {"percentage": "Percentage must be less than 100."}
+                )
+            if percentage != percentage.quantize(Decimal("0.01")):
+                raise ValidationError(
+                    {"percentage": "Use at most two decimal places."}
+                )
+            obj.percentage = percentage
+            message = (
+                f"Applied flat discount of {percentage.normalize():f}% to all products"
+            )
+        obj.updated_by = user
+        obj.save()
+        audit(user, obj, CHANGE, message)
+    return Response(flat_discount_state(user))
+
+
+OVERVIEW_PERIODS = {"1": 1, "7": 7, "30": 30, "90": 90}
+OVERVIEW_MAX_DAYS = 366
+
+
+def overview_range(params):
+    """Reporting window in the store timezone.
+
+    Either a preset (?days=1 is today only, 7, 30, 90) or a custom
+    calendar range (?start=YYYY-MM-DD&end=YYYY-MM-DD, both inclusive).
+    """
+    today = timezone.localdate()
+    raw_start, raw_end = params.get("start"), params.get("end")
+    if raw_start or raw_end:
+        try:
+            start = date.fromisoformat(str(raw_start))
+            end = date.fromisoformat(str(raw_end))
+        except ValueError:
+            raise ValidationError({"start": "Choose a valid start and end date."})
+        if start > end:
+            raise ValidationError({"start": "Start date must be on or before the end date."})
+        if end > today:
+            raise ValidationError({"end": "End date cannot be in the future."})
+        if (end - start).days + 1 > OVERVIEW_MAX_DAYS:
+            raise ValidationError(
+                {"start": f"Choose a range of at most {OVERVIEW_MAX_DAYS} days."}
+            )
+        return start, end
+    days = OVERVIEW_PERIODS.get(params.get("days"), 30)
+    return today - timedelta(days=days - 1), today
+
+
 @api_view(["GET"])
 @permission_classes([IsActiveStaff])
 def overview(request):
     resource_for("orders", request.user)
-    days = {"7": 7, "30": 30, "90": 90}.get(request.query_params.get("days"), 30)
-    today = timezone.localdate()
-    start = today - timedelta(days=days - 1)
-    orders = Order.objects.filter(created_at__date__range=(start, today))
+    start, end = overview_range(request.query_params)
+    days = (end - start).days + 1
+    orders = Order.objects.filter(created_at__date__range=(start, end))
     paid = orders.filter(payment_status="paid").exclude(status="cancelled")
     daily = {
         row["day"]: row["total"]
@@ -449,6 +554,9 @@ def overview(request):
     )
     return Response(
         {
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "days": days,
             "sellers": list(sellers),
             "revenue": total,
             "orders": orders.count(),

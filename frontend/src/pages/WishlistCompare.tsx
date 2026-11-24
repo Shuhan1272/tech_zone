@@ -191,7 +191,7 @@ export function WishlistPage() {
 
       <PageHeading
         eyebrow="SAVED FOR LATER"
-        title="My wishlist"
+        title="My Wishlist"
         description="All the tech you love, in one place."
         action={
           auth.user && wish.wishlist?.items.length ? (
@@ -265,7 +265,7 @@ export function WishlistPage() {
               to="/login?next=%2Fwishlist"
               className="btn btn-primary"
             >
-              Sign in
+              Sign In
             </Link>
           }
         />
@@ -332,7 +332,7 @@ export function WishlistPage() {
                       size={17}
                     />
 
-                    Add to cart
+                    Add to Cart
                   </Button>
 
                   {/* REMOVE FROM WISHLIST */}
@@ -363,14 +363,14 @@ export function WishlistPage() {
 
         <Empty
           icon="heart"
-          title="Nothing saved yet"
+          title="Nothing Saved Yet"
           description="Tap the heart on any product to keep it here."
           action={
             <Link
               to="/catalog"
               className="btn btn-primary"
             >
-              Discover products
+              Discover Products
             </Link>
           }
         />
@@ -430,7 +430,7 @@ export function SharedWishlist() {
       <Breadcrumbs
         items={[
           {
-            label: 'Shared wishlist',
+            label: 'Shared Wishlist',
           },
         ]}
       />
@@ -571,7 +571,7 @@ export function Compare() {
       <Breadcrumbs
         items={[
           {
-            label: 'Compare products',
+            label: 'Compare Products',
           },
         ]}
       />
@@ -582,7 +582,7 @@ export function Compare() {
 
       <PageHeading
         eyebrow="MAKE THE RIGHT CHOICE"
-        title="Compare products"
+        title="Compare Products"
         description="See the differences that matter, side by side."
         action={
           compare.ids.length > 0 ? (
@@ -595,7 +595,7 @@ export function Compare() {
                 size={17}
               />
 
-              Clear all
+              Clear All
             </Button>
           ) : undefined
         }
@@ -611,14 +611,14 @@ export function Compare() {
 
         <Empty
           icon="compare"
-          title="Choose products to compare"
+          title="Choose Products to Compare"
           description="Add up to four products from the catalog to compare their specifications."
           action={
             <Link
               to="/catalog"
               className="btn btn-primary"
             >
-              Browse products
+              Browse Products
             </Link>
           }
         />
@@ -653,7 +653,7 @@ export function Compare() {
                 }
               />
 
-              Show differences only
+              Show Differences Only
             </label>
 
             <span>
@@ -692,7 +692,7 @@ export function Compare() {
                         onClick={() =>
                           compare.toggle(product.id)
                         }
-                        title="Remove product"
+                        title="Remove Product"
                       >
                         <Icon
                           name="x"
@@ -856,7 +856,7 @@ export function Compare() {
                 size={17}
               />
 
-              Add more products
+              Add More Products
             </Link>
 
           </div>

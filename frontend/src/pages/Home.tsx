@@ -416,7 +416,7 @@ export function Home() {
                 to="/catalog"
                 className="btn btn-white"
               >
-                Explore products
+                Explore Products
                 <Icon name="arrow" size={18} />
               </Link>
 
@@ -425,7 +425,7 @@ export function Home() {
                 className="btn btn-hero-outline"
               >
                 <Icon name="pc" size={19} />
-                Build your PC
+                Build Your PC
               </Link>
 
             </div>
@@ -434,17 +434,17 @@ export function Home() {
 
               <span>
                 <Icon name="shield-check" size={19} />
-                100% genuine
+                100% Genuine
               </span>
 
               <span>
                 <Icon name="truck" size={19} />
-                Nationwide delivery
+                Nationwide Delivery
               </span>
 
               <span>
                 <Icon name="headphones" size={19} />
-                Helpful support
+                Helpful Support
               </span>
 
             </div>
@@ -490,7 +490,7 @@ export function Home() {
 
               <div className="techzone-hero-image-label">
                 <Icon name="bolt" size={16} />
-                Explore what's next
+                Explore What's Next
               </div>
 
             </div>
@@ -650,7 +650,7 @@ export function Home() {
             </span>
 
             <span>
-              <strong>Reliable delivery</strong>
+              <strong>Reliable Delivery</strong>
               <small>Across Bangladesh</small>
             </span>
           </div>
@@ -661,8 +661,8 @@ export function Home() {
             </span>
 
             <span>
-              <strong>Authentic products</strong>
-              <small>Shop with confidence</small>
+              <strong>Authentic Products</strong>
+              <small>Shop with Confidence</small>
             </span>
           </div>
 
@@ -672,8 +672,8 @@ export function Home() {
             </span>
 
             <span>
-              <strong>Great value</strong>
-              <small>Transparent pricing</small>
+              <strong>Great Value</strong>
+              <small>Transparent Pricing</small>
             </span>
           </div>
 
@@ -683,8 +683,8 @@ export function Home() {
             </span>
 
             <span>
-              <strong>Here to help</strong>
-              <small>Support when you need it</small>
+              <strong>Here to Help</strong>
+              <small>Support When You Need It</small>
             </span>
           </div>
 
@@ -716,7 +716,7 @@ export function Home() {
             to="/catalog"
             className="section-link"
           >
-            Browse all products
+            Browse All Products
             <Icon name="arrow" size={18} />
           </Link>
 
@@ -754,7 +754,7 @@ export function Home() {
                 </strong>
 
                 <small>
-                  Explore collection
+                  Explore Collection
                   <Icon name="arrow" size={14} />
                 </small>
 
@@ -826,7 +826,7 @@ export function Home() {
               to="/compare"
               className="btn btn-primary btn-small"
             >
-              Compare products
+              Compare Products
               <Icon name="arrow" size={17} />
             </Link>
 
@@ -855,8 +855,8 @@ export function Home() {
 
             <h2>
               {featured.data.length
-                ? 'Featured products'
-                : 'Fresh arrivals'}
+                ? 'Featured Products'
+                : 'Fresh Arrivals'}
             </h2>
 
             <p>
@@ -872,7 +872,7 @@ export function Home() {
             }
             className="section-link"
           >
-            View all products
+            View All Products
             <Icon name="arrow" size={18} />
           </Link>
 
@@ -939,7 +939,7 @@ export function Home() {
             to="/catalog"
             className="btn btn-white"
           >
-            Start shopping
+            Start Shopping
             <Icon name="arrow" size={18} />
           </Link>
 

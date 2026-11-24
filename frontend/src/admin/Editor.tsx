@@ -40,11 +40,11 @@ export function Editor({
   const base = `resources/${section.key}/${id}/`;
   const isAccessRecord = ['team', 'roles'].includes(section.key);
   const creationLabels: Record<string, { heading: string; button: string }> = {
-    team: { heading: 'Add staff member', button: 'Create staff account' },
-    roles: { heading: 'Create role', button: 'Create role' },
+    team: { heading: 'Add Staff Member', button: 'Create Staff Account' },
+    roles: { heading: 'Create Role', button: 'Create Role' },
   };
-  const newHeading = creationLabels[section.key]?.heading || 'New record';
-  const createLabel = creationLabels[section.key]?.button || 'Create record';
+  const newHeading = creationLabels[section.key]?.heading || 'New Record';
+  const createLabel = creationLabels[section.key]?.button || 'Create Record';
   const heading =
     id === 'new' ? newHeading : String(data?.data.email || data?.data.name || `Record #${id}`);
 
@@ -159,9 +159,9 @@ export function Editor({
                 else setEditing(false);
               }}
             >
-              Discard changes
+              Discard Changes
             </button>
-            <button onClick={() => setDiscard(null)}>Keep editing</button>
+            <button onClick={() => setDiscard(null)}>Keep Editing</button>
           </div>
         </section>
       ) : null}
@@ -190,7 +190,7 @@ export function Editor({
           </fieldset>
           <div className="buttons editor-footer">
             <button className="primary" disabled={busy}>
-              {busy ? 'Saving…' : id === 'new' ? createLabel : 'Save changes'}
+              {busy ? 'Saving…' : id === 'new' ? createLabel : 'Save Changes'}
             </button>
             <button
               type="button"
@@ -222,7 +222,7 @@ export function Editor({
           </dl>
           {data.access && (
             <section className="access-summary">
-              <h3>Access summary</h3>
+              <h3>Access Summary</h3>
               <div className="access-chips">
                 {data.access.groups.length ? (
                   data.access.groups.map((group) => (
@@ -231,17 +231,17 @@ export function Editor({
                     </span>
                   ))
                 ) : (
-                  <span className="caption">No roles assigned</span>
+                  <span className="caption">No Roles Assigned</span>
                 )}
               </div>
               <div className="access-summary-grid">
                 <div>
                   <strong>{data.access.effective_permissions.length}</strong>
-                  <span>Effective permissions</span>
+                  <span>Effective Permissions</span>
                 </div>
                 <div>
                   <strong>{data.access.direct_permissions.length}</strong>
-                  <span>Individual permissions</span>
+                  <span>Individual Permissions</span>
                 </div>
               </div>
               <p className="caption">
@@ -251,7 +251,7 @@ export function Editor({
           )}
           {data.members && (
             <section className="access-summary">
-              <h3>Assigned accounts · {data.members.length}</h3>
+              <h3>Assigned Accounts · {data.members.length}</h3>
               {data.members.length ? (
                 <ul className="role-members">
                   {data.members.map((member) => (
@@ -298,7 +298,7 @@ export function Editor({
               {actionDescriptions[action] && <p>{actionDescriptions[action]}</p>}
               {['approve_refund', 'request_refund', 'reject_refund'].includes(action) && (
                 <label>
-                  Reason or note
+                  Reason or Note
                   <textarea
                     required={action !== 'approve_refund'}
                     value={note}
@@ -325,7 +325,7 @@ export function Editor({
             <div className="buttons editor-footer">
               {data.form && (
                 <button className="primary" onClick={() => setEditing(true)}>
-                  {isAccessRecord ? 'Edit details & access' : 'Edit record'}
+                  {isAccessRecord ? 'Edit Details & Access' : 'Edit Record'}
                 </button>
               )}
               {data.actions.map((item) => (
