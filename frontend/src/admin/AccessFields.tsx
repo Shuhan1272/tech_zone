@@ -89,7 +89,7 @@ function PermissionChooser({
     if (remaining.length)
       result.push({
         key: 'other',
-        title: result.length ? 'Other permissions' : 'Available permissions',
+        title: result.length ? 'Other Permissions' : 'Available Permissions',
         permissions: [],
         choices: remaining,
       });
@@ -117,7 +117,7 @@ function PermissionChooser({
   return (
     <fieldset className="access-section">
       <legend>
-        {field.name === 'permissions' ? 'Role permissions' : 'Additional permissions'}
+        {field.name === 'permissions' ? 'Role Permissions' : 'Additional Permissions'}
       </legend>
       <div className="access-heading">
         <p className="caption">
@@ -157,7 +157,7 @@ function PermissionChooser({
                   }
                   aria-label={`${allSelected ? 'Clear' : 'Select'} matching permissions for ${group.title}`}
                 >
-                  {allSelected ? 'Clear' : 'Select all'}
+                  {allSelected ? 'Clear' : 'Select All'}
                 </button>
               </div>
               <div className="permission-options">
@@ -214,7 +214,7 @@ export function AccessFields({ html, onChange }: { html: string; onChange: () =>
       {parsed.fields.map((field) =>
         field.name === 'groups' ? (
           <fieldset className="access-section" key={field.name}>
-            <legend>Assigned roles</legend>
+            <legend>Assigned Roles</legend>
             <p className="caption">Staff inherit the permissions of every selected role.</p>
             <div className="access-role-list">
               {field.choices.map((choice) => (
@@ -231,7 +231,7 @@ export function AccessFields({ html, onChange }: { html: string; onChange: () =>
             </div>
             {!field.choices.length && (
               <p className="caption">
-                Create a role in Roles & permissions to assign shared access.
+                Create a role in Roles & Permissions to assign shared access.
               </p>
             )}
           </fieldset>

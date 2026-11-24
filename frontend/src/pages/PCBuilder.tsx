@@ -292,7 +292,7 @@ export function PCBuilder() {
               to="/login?next=%2Fpc-builder"
               className="btn btn-primary"
             >
-              Sign in
+              Sign In
             </Link>
           }
         />
@@ -305,7 +305,7 @@ export function PCBuilder() {
 
           <div className="builder-topbar">
             <div>
-              <h2>My builds</h2>
+              <h2>My Builds</h2>
 
               <p>
                 Select an existing build or create a new one.
@@ -333,7 +333,7 @@ export function PCBuilder() {
                   size={17}
                 />
 
-                New build
+                New Build
               </Button>
             </form>
           </div>
@@ -359,7 +359,7 @@ export function PCBuilder() {
           ) : builds.data.length === 0 ? (
             <Empty
               icon="cpu"
-              title="No builds yet"
+              title="No Builds Yet"
               description="Create your first build using the form above."
             />
           ) : (
@@ -404,7 +404,7 @@ export function PCBuilder() {
 
                     <div className="builder-components-head">
                       <h2>
-                        Choose your components
+                        Choose Your Components
                       </h2>
 
                       <span>
@@ -475,7 +475,7 @@ export function PCBuilder() {
                                 </>
                               ) : (
                                 <span className="component-placeholder">
-                                  Not selected
+                                  Not Selected
                                 </span>
                               )}
                             </div>
@@ -486,7 +486,7 @@ export function PCBuilder() {
 
                               {item && (
                                 <button
-                                  title="Remove component"
+                                  title="Remove Component"
                                   onClick={() =>
                                     remove(item.id)
                                   }
@@ -546,7 +546,7 @@ export function PCBuilder() {
                       />
 
                       <h3>
-                        Build summary
+                        Build Summary
                       </h3>
                     </div>
 
@@ -554,7 +554,7 @@ export function PCBuilder() {
 
                     <div className="builder-total">
                       <small>
-                        Estimated total
+                        Estimated Total
                       </small>
 
                       <strong>
@@ -614,7 +614,7 @@ export function PCBuilder() {
                           size={19}
                         />
 
-                        Compatibility check
+                        Compatibility Check
                       </strong>
 
                       {report.loading ? (
@@ -634,7 +634,7 @@ export function PCBuilder() {
                             }`}
                           >
                             {report.data.issues.length
-                              ? 'Needs attention'
+                              ? 'Needs Attention'
                               : 'Checked'}
                           </span>
 
@@ -710,7 +710,7 @@ export function PCBuilder() {
                         size={18}
                       />
 
-                      Add build to cart
+                      Add Build to Cart
                     </Button>
 
                     <p className="form-note">
@@ -932,7 +932,7 @@ function ComponentPicker({
         ) : (
           <Empty
             icon="box"
-            title="No components found"
+            title="No Components Found"
             description="Make sure PC Builder category mappings are configured in Django Admin."
           />
         )}

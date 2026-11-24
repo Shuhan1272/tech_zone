@@ -29,7 +29,11 @@ import type {
 } from '../lib/types';
 
 import {
+  EMI_MAX_MONTHS,
+  EMI_MIN_AMOUNT,
+  PAYMENT_PLAN_KEY,
   absoluteMedia,
+  emiMonthly,
   money,
   number,
   valueText,
@@ -203,7 +207,7 @@ function configurationLabel(
         ([key, value]) =>
           `${key}: ${valueText(value)}`
       )
-      .join(' / ') || 'Standard configuration'
+      .join(' / ') || 'Standard Configuration'
   );
 }
 
@@ -296,6 +300,7 @@ export function ProductDetail() {
   const [activeImage, setActiveImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
+  const [plan, setPlan] = useState<'cash' | 'emi'>('cash');
 
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
@@ -639,13 +644,13 @@ export function ProductDetail() {
     return (
       <div className="container-wide page-space">
         <Empty
-          title="Product not found"
+          title="Product Not Found"
           action={
             <Link
               to="/catalog"
               className="btn btn-primary"
             >
-              Back to products
+              Back to Products
             </Link>
           }
         />
@@ -800,6 +805,11 @@ export function ProductDetail() {
 
   const original = number(variant?.price);
 
+  // EMI is charged at the regular price in 0% monthly instalments.
+  const emiEligible = Boolean(variant) && original >= EMI_MIN_AMOUNT;
+  const activePlan = emiEligible ? plan : 'cash';
+  const emiPerMonth = emiMonthly(original, EMI_MAX_MONTHS);
+
   const stock = variant?.stock ?? 0;
 
   const inStock =
@@ -847,8 +857,14 @@ export function ProductDetail() {
     try {
       await cart.add(variant.id, qty);
 
+      try {
+        sessionStorage.setItem(PAYMENT_PLAN_KEY, activePlan);
+      } catch {
+        // Storage unavailable: checkout falls back to cash payment.
+      }
+
       if (buyNow) {
-        navigate('/cart');
+        navigate(activePlan === 'emi' ? '/checkout' : '/cart');
       }
     } catch (e) {
       toast(
@@ -1097,7 +1113,7 @@ export function ProductDetail() {
                 }}
               >
                 <Icon name="search" size={17} />
-                Zoom image
+                Zoom Image
               </button>
             )}
           </div>
@@ -1140,7 +1156,7 @@ export function ProductDetail() {
 
           <div className="gallery-note">
             <Icon name="shield-check" size={18} />
-            Genuine product · Secure checkout
+            Genuine Product · Secure Checkout
           </div>
         </div>
 
@@ -1167,7 +1183,7 @@ export function ProductDetail() {
 
               {reviews.length
                 ? `${average.toFixed(1)} (${reviews.length} reviews)`
-                : 'No reviews yet'}
+                : 'No Reviews Yet'}
             </span>
 
             <span>
@@ -1184,7 +1200,7 @@ export function ProductDetail() {
               <strong>
                 {variant
                   ? money(price)
-                  : 'Contact for price'}
+                  : 'Contact for Price'}
               </strong>
 
               {original > price && (
@@ -1212,7 +1228,7 @@ export function ProductDetail() {
 
             {inStock
               ? `In stock · ${stock} available`
-              : 'Currently unavailable'}
+              : 'Currently Unavailable'}
           </div>
 
           {/* ============================================
@@ -1231,7 +1247,7 @@ export function ProductDetail() {
             <div className="variant-select">
               <strong>
                 {configurations.length > 1
-                  ? 'Choose configuration'
+                  ? 'Choose Configuration'
                   : 'Configuration'}
               </strong>
 
@@ -1281,7 +1297,7 @@ export function ProductDetail() {
 
                           {available
                             ? 'Available'
-                            : 'Out of stock'}
+                            : 'Out of Stock'}
                         </small>
                       </button>
                     );
@@ -1298,7 +1314,7 @@ export function ProductDetail() {
           {colorChoices.length > 0 && (
             <div className="variant-select pd-color-select">
               <strong>
-                Choose color
+                Choose Color
 
                 {selectedColor
                   ? `: ${selectedColor}`
@@ -1333,7 +1349,7 @@ export function ProductDetail() {
                         !matching
                           ? 'Color not configured'
                           : matching.stock < 1
-                            ? 'Out of stock'
+                            ? 'Out of Stock'
                             : color
                       }
                       onClick={() =>
@@ -1371,7 +1387,7 @@ export function ProductDetail() {
             Object.keys(product.key_feature).length >
               0 && (
               <div className="detail-features">
-                <h3>Key highlights</h3>
+                <h3>Key Highlights</h3>
 
                 {Object.entries(
                   product.key_feature
@@ -1391,6 +1407,69 @@ export function ProductDetail() {
                   ))}
               </div>
             )}
+
+          {/* ============================================
+              PAYMENT OPTIONS (CASH PRICE / EMI)
+          ============================================= */}
+
+          {variant && emiEligible && (
+            <fieldset className="pd-payment-options">
+              <legend>Payment Options</legend>
+
+              <label
+                className={`pd-pay-card ${
+                  activePlan === 'cash' ? 'selected' : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment_plan"
+                  value="cash"
+                  checked={activePlan === 'cash'}
+                  onChange={() => setPlan('cash')}
+                />
+
+                <span className="pd-pay-body">
+                  <span className="pd-pay-price">
+                    {money(price)}
+                    {original > price && (
+                      <del>{money(original)}</del>
+                    )}
+                  </span>
+                  <span className="pd-pay-title">
+                    Cash Discount Price
+                  </span>
+                  <small>Online / Cash Payment</small>
+                </span>
+              </label>
+
+              <label
+                className={`pd-pay-card ${
+                  activePlan === 'emi' ? 'selected' : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment_plan"
+                  value="emi"
+                  checked={activePlan === 'emi'}
+                  onChange={() => setPlan('emi')}
+                />
+
+                <span className="pd-pay-body">
+                  <span className="pd-pay-price">
+                    {money(emiPerMonth)}/month
+                  </span>
+                  <span className="pd-pay-title">
+                    Regular Price: {money(original)}
+                  </span>
+                  <small>
+                    0% EMI for up to {EMI_MAX_MONTHS} Months
+                  </small>
+                </span>
+              </label>
+            </fieldset>
+          )}
 
           {/* ============================================
               PURCHASE ACTIONS
@@ -1435,7 +1514,7 @@ export function ProductDetail() {
               onClick={() => void add()}
             >
               <Icon name="cart" size={18} />
-              Add to cart
+              Add to Cart
             </Button>
 
             <Button
@@ -1443,7 +1522,7 @@ export function ProductDetail() {
               disabled={!inStock || busy}
               onClick={() => void add(true)}
             >
-              Buy now
+              Buy Now
               <Icon name="arrow" size={17} />
             </Button>
           </div>
@@ -1460,8 +1539,8 @@ export function ProductDetail() {
               <Icon name="heart" size={18} />
 
               {saved
-                ? 'Saved to wishlist'
-                : 'Add to wishlist'}
+                ? 'Saved to Wishlist'
+                : 'Add to Wishlist'}
             </button>
 
             <button
@@ -1473,8 +1552,8 @@ export function ProductDetail() {
               <Icon name="compare" size={18} />
 
               {compare.ids.includes(product.id)
-                ? 'Remove comparison'
-                : 'Add to compare'}
+                ? 'Remove Comparison'
+                : 'Add to Compare'}
             </button>
 
             <button
@@ -1494,7 +1573,7 @@ export function ProductDetail() {
 
           {shareOpen && (
             <div className="pd-share">
-              <strong>Share this product</strong>
+              <strong>Share This Product</strong>
 
               <div>
                 <button
@@ -1534,7 +1613,7 @@ export function ProductDetail() {
                   type="button"
                   onClick={() => void copy()}
                 >
-                  Copy link
+                  Copy Link
                 </button>
               </div>
             </div>
@@ -1550,7 +1629,7 @@ export function ProductDetail() {
 
               <span>
                 <strong>
-                  Delivery across Bangladesh
+                  Delivery Across Bangladesh
                 </strong>
 
                 <small>
@@ -1565,7 +1644,7 @@ export function ProductDetail() {
 
               <span>
                 <strong>
-                  Secure SSLCommerz payment
+                  Secure SSLCommerz Payment
                 </strong>
 
                 <small>
@@ -1584,7 +1663,7 @@ export function ProductDetail() {
 
       <div className="detail-bottom pd-bottom">
         <div className="detail-tabs-heading">
-          <h2>Product information</h2>
+          <h2>Product Information</h2>
         </div>
 
         <div
@@ -1637,7 +1716,7 @@ export function ProductDetail() {
 
           {tab === 'specification' && (
             <>
-              <h3>Technical specifications</h3>
+              <h3>Technical Specifications</h3>
 
               {Object.keys(
                 product.specification ?? {}
@@ -1702,7 +1781,7 @@ export function ProductDetail() {
 
           {tab === 'description' && (
             <>
-              <h3>Product description</h3>
+              <h3>Product Description</h3>
 
               {product.description ? (
                 <div className="detail-description">
@@ -1725,7 +1804,7 @@ export function ProductDetail() {
               <div className="pd-section-header">
                 <div>
                   <h3>
-                    Customer questions & answers
+                    Customer Questions & Answers
                   </h3>
 
                   <p>
@@ -1743,7 +1822,7 @@ export function ProductDetail() {
                       : login()
                   }
                 >
-                  Ask a question
+                  Ask a Question
                 </button>
               </div>
 
@@ -1755,7 +1834,7 @@ export function ProductDetail() {
                   }
                 >
                   <label htmlFor="pd-question">
-                    Your question
+                    Your Question
                   </label>
 
                   <textarea
@@ -1784,7 +1863,7 @@ export function ProductDetail() {
                   >
                     {submitting
                       ? 'Submitting...'
-                      : 'Submit question'}
+                      : 'Submit Question'}
                   </button>
                 </form>
               )}
@@ -1845,7 +1924,7 @@ export function ProductDetail() {
             <>
               <div className="pd-section-header">
                 <div>
-                  <h3>Customer reviews</h3>
+                  <h3>Customer Reviews</h3>
 
                   <p>
                     Read ratings and feedback
@@ -1862,7 +1941,7 @@ export function ProductDetail() {
                       : login()
                   }
                 >
-                  Write a review
+                  Write a Review
                 </button>
               </div>
 
@@ -1919,7 +1998,7 @@ export function ProductDetail() {
                     void submitReview(e)
                   }
                 >
-                  <label>Your rating</label>
+                  <label>Your Rating</label>
 
                   <Stars
                     rating={rating}
@@ -1927,7 +2006,7 @@ export function ProductDetail() {
                   />
 
                   <label htmlFor="pd-review">
-                    Your review
+                    Your Review
                   </label>
 
                   <textarea
@@ -1951,7 +2030,7 @@ export function ProductDetail() {
                   >
                     {submitting
                       ? 'Submitting...'
-                      : 'Submit review'}
+                      : 'Submit Review'}
                   </button>
                 </form>
               )}

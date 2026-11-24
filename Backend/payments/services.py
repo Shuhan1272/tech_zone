@@ -129,7 +129,18 @@ def create_gateway_session(payment):
         'ipn_url':
             f'{backend_url}/api/v1/payments/callback/ipn/',
 
-        'emi_option': '0',
+        # EMI orders open the gateway in EMI-only mode with the
+        # tenure the customer picked at checkout.
+        **(
+            {
+                'emi_option': '1',
+                'emi_max_inst_option': str(order.emi_months),
+                'emi_selected_inst': str(order.emi_months),
+                'emi_allow_only': '1',
+            }
+            if order.is_emi and order.emi_months
+            else {'emi_option': '0'}
+        ),
 
         # Customer
         'cus_name': order.shipping_name[:50],

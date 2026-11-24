@@ -127,6 +127,9 @@ export interface Order {
   discount_code?: string;
   shipping_charge?: string;
   total_amount: string;
+  is_emi?: boolean;
+  emi_months?: number | null;
+  emi_monthly_amount?: string | number | null;
   status: string;
   payment_status: string;
   created_at: string;

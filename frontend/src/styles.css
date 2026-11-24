@@ -2607,6 +2607,62 @@ main {
 .summary-line.shipping-line strong {
   color: #b45309;
 }
+.summary-line.emi-line {
+  margin-top: -10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #eef3ff;
+}
+.summary-line.emi-line strong {
+  color: #1d4bc2;
+}
+.emi-tenure {
+  margin: -2px 0 14px;
+  padding: 14px;
+  border: 1px solid #dbe5ff;
+  border-radius: 10px;
+  background: #f7f9ff;
+}
+.emi-tenure > span {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+.emi-tenure-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.emi-tenure-options button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  border: 1.5px solid #dfe6f2;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.emi-tenure-options button strong {
+  font-size: 13px;
+  color: #13233f;
+}
+.emi-tenure-options button small {
+  font-size: 11px;
+  color: #64748b;
+}
+.emi-tenure-options button.selected {
+  border-color: #2457e7;
+  background: #eef3ff;
+}
+@media (max-width: 520px) {
+  .emi-tenure-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .summary-divider {
   border-top: 1px solid #e5ebf5;
   margin: 22px 0;

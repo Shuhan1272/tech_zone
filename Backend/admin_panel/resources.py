@@ -29,7 +29,7 @@ resources = {
         "Orders",
         "shipping_name status payment_status total_amount",
         "shipping_name shipping_phone user__email",
-        extra="user payment_method subtotal discount_amount discount_code shipping_charge shipping_phone shipping_address shipping_house shipping_road shipping_division shipping_district shipping_upazila shipping_postal_code shipping_instructions created_at",
+        extra="user payment_method subtotal discount_amount discount_code shipping_charge is_emi emi_months shipping_phone shipping_address shipping_house shipping_road shipping_division shipping_district shipping_upazila shipping_postal_code shipping_instructions created_at",
         delete=False,
     ),
     "payments": Resource(
@@ -90,7 +90,7 @@ resources = {
     "images": Resource(
         "products.ProductImage",
         "Catalog",
-        "Product images",
+        "Product Images",
         "product alt_text is_primary display_order",
         "product__name alt_text",
         "product image alt_text is_primary display_order",
@@ -170,8 +170,8 @@ resources = {
     ),
     "mappings": Resource(
         "pc_builder.PCComponentCategory",
-        "PC builder",
-        "Component mappings",
+        "PC Builder",
+        "Component Mappings",
         "category component_type",
         "category__name",
         "category component_type",
@@ -179,15 +179,15 @@ resources = {
     ),
     "builds": Resource(
         "pc_builder.PCBuild",
-        "PC builder",
-        "Saved builds",
+        "PC Builder",
+        "Saved Builds",
         "name user updated_at",
         "name user__email",
     ),
     "team": Resource(
         "accounts.User",
         "Administration",
-        "Staff accounts",
+        "Staff Accounts",
         "email first_name last_name is_active groups last_login",
         "email first_name last_name phone",
         "email first_name last_name phone is_active groups user_permissions",
@@ -197,7 +197,7 @@ resources = {
     "roles": Resource(
         "auth.Group",
         "Administration",
-        "Roles & permissions",
+        "Roles & Permissions",
         "name permissions",
         "name",
         "name permissions",
@@ -206,7 +206,7 @@ resources = {
     "activity": Resource(
         "admin.LogEntry",
         "Administration",
-        "Activity log",
+        "Activity Log",
         "user object_repr action_flag action_time",
         "user__email object_repr change_message",
         extra="content_type object_id change_message",

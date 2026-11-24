@@ -4,6 +4,7 @@ import re
 from rest_framework import serializers
 
 from .models import Order, OrderItem
+from .services import EMI_MONTH_CHOICES
 from products.models import ProductImage
 
 
@@ -114,6 +115,10 @@ class OrderSerializer(serializers.ModelSerializer):
             'shipping_charge',
             'total_amount',
 
+            'is_emi',
+            'emi_months',
+            'emi_monthly_amount',
+
             'status',
 
             'payment_method',
@@ -186,6 +191,16 @@ class CheckoutSerializer(serializers.Serializer):
     payment_method = serializers.ChoiceField(
         choices=Order.PAYMENT_METHOD_CHOICES,
         default='sslcommerz'
+    )
+
+    # =====================================================
+    # EMI (optional; only with online payment)
+    # =====================================================
+
+    emi_months = serializers.ChoiceField(
+        choices=EMI_MONTH_CHOICES,
+        required=False,
+        allow_null=True
     )
 
     # =====================================================
@@ -294,6 +309,19 @@ class CheckoutSerializer(serializers.Serializer):
 
         attrs['discount_type'] = discount_type
         attrs['discount_code'] = code
+
+        # =================================================
+        # EMI VALIDATION
+        # =================================================
+
+        if (
+            attrs.get('emi_months')
+            and attrs.get('payment_method') != 'sslcommerz'
+        ):
+            raise serializers.ValidationError({
+                'emi_months':
+                    'EMI is only available with online payment.'
+            })
 
         # =================================================
         # BUILD COMPLETE SHIPPING ADDRESS

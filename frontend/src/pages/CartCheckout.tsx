@@ -27,11 +27,17 @@ import type {
 } from '../lib/types';
 
 import {
+  EMI_MAX_MONTHS,
+  EMI_MIN_AMOUNT,
+  EMI_MONTHS,
+  PAYMENT_PLAN_KEY,
   absoluteMedia,
+  emiMonthly,
   errorMessage,
   money,
   shippingFor,
   validateGatewayUrl,
+  type EmiMonths,
 } from '../lib/utils';
 
 import {
@@ -52,9 +58,9 @@ type PaymentMethod = 'sslcommerz' | 'cod';
 type DiscountType = 'promo' | 'staff' | 'new_customer';
 
 const discountLabels: Record<DiscountType, string> = {
-  promo: 'Promo discount',
-  staff: 'Staff discount',
-  new_customer: 'New customer discount',
+  promo: 'Promo Discount',
+  staff: 'Staff Discount',
+  new_customer: 'New Customer Discount',
 };
 
 type ShippingForm = {
@@ -589,12 +595,12 @@ export function CartPage() {
   return (
     <div className="container-wide page-space">
       <Breadcrumbs
-        items={[{ label: 'Shopping cart' }]}
+        items={[{ label: 'Shopping Cart' }]}
       />
 
       <PageHeading
         eyebrow="YOUR SELECTION"
-        title="Shopping cart"
+        title="Shopping Cart"
         description="Review your selected products, configurations and prices before checkout."
       />
 
@@ -675,7 +681,7 @@ export function CartPage() {
               to="/login?next=%2Fcart"
               className="btn btn-primary"
             >
-              Sign in
+              Sign In
             </Link>
           }
         />
@@ -691,7 +697,7 @@ export function CartPage() {
               to="/catalog"
               className="btn btn-primary"
             >
-              Explore products
+              Explore Products
               <Icon name="arrow" size={18} />
             </Link>
           }
@@ -705,12 +711,12 @@ export function CartPage() {
           <div className="cart-list techzone-cart-list">
             <div className="cart-list-title">
               <h2>
-                Your items
+                Your Items
                 <span> ({cart.count})</span>
               </h2>
 
               <Link to="/catalog">
-                Continue shopping
+                Continue Shopping
                 <Icon name="arrow" size={16} />
               </Link>
             </div>
@@ -792,7 +798,7 @@ export function CartPage() {
                       >
                         {variant.stock > 0
                           ? `${variant.stock} available`
-                          : 'Out of stock'}
+                          : 'Out of Stock'}
                       </div>
                     )}
 
@@ -920,7 +926,7 @@ export function CartPage() {
                 onClick={() => void clearCart()}
               >
                 <Icon name="trash" size={16} />
-                <span>{clearing ? 'Clearing cart...' : 'Clear cart'}</span>
+                <span>{clearing ? 'Clearing cart...' : 'Clear Cart'}</span>
               </button>
             </div>
           </div>
@@ -930,11 +936,11 @@ export function CartPage() {
           =========================================== */}
 
           <div className="summary-card techzone-cart-summary">
-            <h3>Order summary</h3>
+            <h3>Order Summary</h3>
 
             <div className="summary-line">
               <span>
-                Original subtotal
+                Original Subtotal
               </span>
 
               <strong>
@@ -944,7 +950,7 @@ export function CartPage() {
 
             {totalSavings > 0 && (
               <div className="summary-line discount-line">
-                <span>Product discounts</span>
+                <span>Product Discounts</span>
 
                 <strong>
                   -{money(totalSavings)}
@@ -967,7 +973,7 @@ export function CartPage() {
             <div className="summary-divider" />
 
             <div className="summary-total">
-              <span>Estimated total</span>
+              <span>Estimated Total</span>
 
               <strong>
                 {money(subtotal + shippingCharge)}
@@ -980,14 +986,14 @@ export function CartPage() {
                 type="button"
                 disabled
               >
-                Update unavailable items
+                Update Unavailable Items
               </button>
             ) : (
               <Link
                 to="/checkout"
                 className="btn btn-primary full-width"
               >
-                Proceed to checkout
+                Proceed to Checkout
                 <Icon
                   name="arrow"
                   size={18}
@@ -1033,6 +1039,31 @@ export function Checkout() {
     setPaymentMethod,
   ] = useState<PaymentMethod>('sslcommerz');
 
+  // 0% EMI (online through SSLCommerz, regular price).
+  // Preselected when the customer chose EMI on a product page.
+  const [emi, setEmi] = useState(() => {
+    try {
+      return sessionStorage.getItem(PAYMENT_PLAN_KEY) === 'emi';
+    } catch {
+      return false;
+    }
+  });
+  const [emiMonths, setEmiMonths] =
+    useState<EmiMonths>(EMI_MAX_MONTHS);
+
+  const choosePayment = (choice: 'sslcommerz' | 'emi' | 'cod') => {
+    setPaymentMethod(choice === 'cod' ? 'cod' : 'sslcommerz');
+    setEmi(choice === 'emi');
+    try {
+      sessionStorage.setItem(
+        PAYMENT_PLAN_KEY,
+        choice === 'emi' ? 'emi' : 'cash'
+      );
+    } catch {
+      // Preference is a convenience only.
+    }
+  };
+
   const [promo, setPromo] = useState('');
   const [discount, setDiscount] = useState<number | null>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<{
@@ -1062,19 +1093,37 @@ export function Checkout() {
   const items: ExtendedCartItem[] =
     cart.cart?.items ?? [];
 
-  const subtotal = items.reduce(
+  const regularSubtotal = items.reduce(
     (total, item) =>
       total +
-      getItemPrice(item) * item.quantity,
+      getOriginalPrice(item) * item.quantity,
     0
   );
 
-  const productSavings = items.reduce(
+  // EMI is available only when the order reaches the minimum.
+  const emiAvailable =
+    regularSubtotal + shippingFor(regularSubtotal) >= EMI_MIN_AMOUNT;
+  const useEmi = emi && emiAvailable;
+
+  // EMI pays the regular price: product discounts are cash-only.
+  const linePrice = (item: CartItem) =>
+    useEmi ? getOriginalPrice(item) : getItemPrice(item);
+
+  const subtotal = items.reduce(
     (total, item) =>
       total +
-      getSavings(item) * item.quantity,
+      linePrice(item) * item.quantity,
     0
   );
+
+  const productSavings = useEmi
+    ? 0
+    : items.reduce(
+        (total, item) =>
+          total +
+          getSavings(item) * item.quantity,
+        0
+      );
 
   const unavailableItems = items.filter((item) => {
     const variant = getVariantDisplay(item);
@@ -1094,6 +1143,8 @@ export function Checkout() {
       0,
       subtotal - (appliedDiscount?.subtotal === subtotal ? (discount ?? 0) : 0)
     ) + shippingCharge;
+
+  const emiPerMonth = emiMonthly(estimatedTotal, emiMonths);
 
   // =======================================================
   // LOAD SAVED ADDRESS
@@ -1394,6 +1445,10 @@ export function Checkout() {
                   discount_code: appliedDiscount.code,
                 }
               : {}),
+
+            ...(useEmi && paymentMethod === 'sslcommerz'
+              ? { emi_months: emiMonths }
+              : {}),
           },
         }
       );
@@ -1493,13 +1548,13 @@ export function Checkout() {
       <div className="container-wide page-space">
         <Empty
           icon="lock"
-          title="Sign in to check out"
+          title="Sign In to Check Out"
           action={
             <Link
               to="/login?next=%2Fcheckout"
               className="btn btn-primary"
             >
-              Sign in
+              Sign In
             </Link>
           }
         />
@@ -1581,7 +1636,7 @@ export function Checkout() {
             to={`/orders/${pendingOrder.orderId}`}
             className="btn btn-outline"
           >
-            View order details
+            View Order Details
           </Link>
 
           <button
@@ -1592,7 +1647,7 @@ export function Checkout() {
               navigate('/orders');
             }}
           >
-            View all orders
+            View All Orders
           </button>
         </div>
       </div>
@@ -1619,13 +1674,13 @@ export function Checkout() {
     return (
       <div className="container-wide page-space">
         <Empty
-          title="Your cart is empty"
+          title="Your Cart Is Empty"
           action={
             <Link
               to="/catalog"
               className="btn btn-primary"
             >
-              Browse products
+              Browse Products
             </Link>
           }
         />
@@ -1653,7 +1708,7 @@ export function Checkout() {
 
       <PageHeading
         eyebrow="ALMOST THERE"
-        title="Secure checkout"
+        title="Secure Checkout"
         description="One last step before your new tech is on its way."
       />
 
@@ -1673,7 +1728,7 @@ export function Checkout() {
               </span>
 
               <div>
-                <h2>Delivery information</h2>
+                <h2>Delivery Information</h2>
                 <p>
                   Where should we send your order?
                 </p>
@@ -1768,7 +1823,7 @@ export function Checkout() {
                   }
                 >
                   <option value="">
-                    Select division
+                    Select Division
                   </option>
 
                   {divisions.map((division) => (
@@ -1881,7 +1936,7 @@ export function Checkout() {
               </span>
 
               <div>
-                <h2>Payment method</h2>
+                <h2>Payment Method</h2>
                 <p>
                   Choose how you want to pay
                 </p>
@@ -1895,7 +1950,7 @@ export function Checkout() {
                 marginBottom: 12,
                 borderColor:
                   paymentMethod ===
-                  'sslcommerz'
+                    'sslcommerz' && !useEmi
                     ? '#2457E7'
                     : undefined,
               }}
@@ -1906,12 +1961,10 @@ export function Checkout() {
                 value="sslcommerz"
                 checked={
                   paymentMethod ===
-                  'sslcommerz'
+                    'sslcommerz' && !useEmi
                 }
                 onChange={() =>
-                  setPaymentMethod(
-                    'sslcommerz'
-                  )
+                  choosePayment('sslcommerz')
                 }
                 style={{
                   accentColor: '#2457E7',
@@ -1938,6 +1991,68 @@ export function Checkout() {
             <label
               className="payment-method"
               style={{
+                cursor: emiAvailable ? 'pointer' : 'not-allowed',
+                marginBottom: 12,
+                opacity: emiAvailable ? 1 : 0.6,
+                borderColor: useEmi ? '#2457E7' : undefined,
+              }}
+            >
+              <input
+                type="radio"
+                name="payment_method"
+                value="emi"
+                checked={useEmi}
+                disabled={!emiAvailable}
+                onChange={() => choosePayment('emi')}
+                style={{
+                  accentColor: '#2457E7',
+                }}
+              />
+
+              <div style={{ flex: 1 }}>
+                <strong>
+                  EMI — 0% Interest
+                </strong>
+
+                <small>
+                  {emiAvailable
+                    ? `Pay the regular price in up to ${EMI_MAX_MONTHS} monthly instalments with supported bank cards`
+                    : `Available for orders of ${money(EMI_MIN_AMOUNT)} or more`}
+                </small>
+              </div>
+
+              <Icon
+                name="calendar"
+                size={24}
+              />
+            </label>
+
+            {useEmi && (
+              <div className="emi-tenure">
+                <span>Choose EMI Tenure</span>
+
+                <div className="emi-tenure-options">
+                  {EMI_MONTHS.map((months) => (
+                    <button
+                      type="button"
+                      key={months}
+                      className={months === emiMonths ? 'selected' : ''}
+                      aria-pressed={months === emiMonths}
+                      onClick={() => setEmiMonths(months)}
+                    >
+                      <strong>{months} Months</strong>
+                      <small>
+                        {money(emiMonthly(estimatedTotal, months))}/month
+                      </small>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <label
+              className="payment-method"
+              style={{
                 cursor: 'pointer',
                 borderColor:
                   paymentMethod === 'cod'
@@ -1953,7 +2068,7 @@ export function Checkout() {
                   paymentMethod === 'cod'
                 }
                 onChange={() =>
-                  setPaymentMethod('cod')
+                  choosePayment('cod')
                 }
                 style={{
                   accentColor: '#2457E7',
@@ -1980,7 +2095,9 @@ export function Checkout() {
             <p className="payment-note">
               {paymentMethod === 'cod'
                 ? 'Your order will be placed without redirecting to a payment gateway. Payment remains pending until cash is collected.'
-                : "After placing your order, you'll be redirected to the official SSLCommerz payment page. Payment confirmation is handled by your Django backend."}
+                : useEmi
+                  ? `EMI uses the regular price (product discounts apply to cash payment only). You'll pay on the SSLCommerz EMI page with a supported bank credit card over ${emiMonths} months.`
+                  : "After placing your order, you'll be redirected to the official SSLCommerz payment page. Payment confirmation is handled by your Django backend."}
             </p>
           </div>
         </div>
@@ -1990,7 +2107,7 @@ export function Checkout() {
         =========================================== */}
 
         <div className="summary-card checkout-summary">
-          <h3>Your order</h3>
+          <h3>Your Order</h3>
 
           {items.map((item) => {
             const variant = getVariantDisplay(item);
@@ -2029,7 +2146,7 @@ export function Checkout() {
 
                 <strong>
                   {money(
-                    getItemPrice(item) *
+                    linePrice(item) *
                       item.quantity
                   )}
                 </strong>
@@ -2050,7 +2167,7 @@ export function Checkout() {
           {productSavings > 0 && (
             <div className="summary-line discount-line">
               <span>
-                Product discounts
+                Product Discounts
               </span>
 
               <strong>
@@ -2076,12 +2193,22 @@ export function Checkout() {
           <div className="summary-divider" />
 
           <div className="summary-total">
-            <span>Estimated total</span>
+            <span>Estimated Total</span>
 
             <strong>
               {money(estimatedTotal)}
             </strong>
           </div>
+
+          {useEmi && (
+            <div className="summary-line emi-line">
+              <span>
+                EMI ({emiMonths} months, 0%)
+              </span>
+
+              <strong>{money(emiPerMonth)}/month</strong>
+            </div>
+          )}
 
           {/* DISCOUNT CODE */}
 
@@ -2129,7 +2256,7 @@ export function Checkout() {
               to="/orders"
               className="btn btn-outline full-width"
             >
-              Check My Orders first
+              Check My Orders First
             </Link>
           )}
 

@@ -49,9 +49,9 @@ import type {
 // ============================================================
 
 const sorts = [
-  ['-created_at', 'Newest first'],
-  ['price', 'Price: low to high'],
-  ['-price', 'Price: high to low'],
+  ['-created_at', 'Newest First'],
+  ['price', 'Price: Low to High'],
+  ['-price', 'Price: High to Low'],
   ['name', 'Name: A to Z'],
   ['-name', 'Name: Z to A'],
 ];
@@ -61,10 +61,10 @@ const sorts = [
 // ============================================================
 
 const availability = [
-  ['in_stock', 'In stock'],
-  ['out_of_stock', 'Out of stock'],
-  ['pre_order', 'Pre-order'],
-  ['coming_soon', 'Coming soon'],
+  ['in_stock', 'In Stock'],
+  ['out_of_stock', 'Out of Stock'],
+  ['pre_order', 'Pre-Order'],
+  ['coming_soon', 'Coming Soon'],
 ];
 
 // ============================================================
@@ -417,7 +417,7 @@ export function Catalog() {
   if (params.get('in_stock') === 'true') {
     activeChips.push([
       'in_stock',
-      'In stock',
+      'In Stock',
       '',
     ]);
   }
@@ -425,7 +425,7 @@ export function Catalog() {
   if (params.get('on_sale') === 'true') {
     activeChips.push([
       'on_sale',
-      'On sale',
+      'On Sale',
       '',
     ]);
   }
@@ -468,7 +468,7 @@ export function Catalog() {
         </strong>
 
         <button onClick={clear}>
-          Clear all
+          Clear All
         </button>
       </div>
 
@@ -488,7 +488,7 @@ export function Catalog() {
             }
             onClick={() => update('category', null)}
           >
-            All categories
+            All Categories
           </button>
 
           {categories.map((category) => (
@@ -536,7 +536,7 @@ export function Catalog() {
       ====================================================== */}
 
       <div className="filter-section">
-        <h4>Price range</h4>
+        <h4>Price Range</h4>
 
         <form onSubmit={applyPrice}>
           <div className="price-fields">
@@ -588,7 +588,7 @@ export function Catalog() {
               Number(minPrice) > Number(maxPrice)
             )}
           >
-            Apply price
+            Apply Price
           </Button>
         </form>
       </div>
@@ -598,7 +598,7 @@ export function Catalog() {
       ====================================================== */}
 
       <div className="filter-section">
-        <h4>Availability &amp; offers</h4>
+        <h4>Availability &amp; Offers</h4>
 
         <div className="filter-checkboxes">
           <label>
@@ -617,7 +617,7 @@ export function Catalog() {
               }
             />
 
-            <span>In stock only</span>
+            <span>In Stock Only</span>
           </label>
 
           <label>
@@ -636,7 +636,7 @@ export function Catalog() {
               }
             />
 
-            <span>On sale</span>
+            <span>On Sale</span>
           </label>
 
           {availability.map(([value, label]) => (
@@ -694,7 +694,7 @@ export function Catalog() {
             ))}
 
           {categoryBrands.length === 0 && (
-            <small>No brands available</small>
+            <small>No Brands Available</small>
           )}
         </div>
       </div>
@@ -780,7 +780,7 @@ export function Catalog() {
             {selected?.name ||
               (params.get('search')
                 ? `Results for “${params.get('search')}”`
-                : 'All products')}
+                : 'All Products')}
           </h1>
 
           <p>
@@ -863,7 +863,7 @@ export function Catalog() {
 
             <div className="toolbar-controls">
               <label>
-                Sort by
+                Sort By
 
                 <select
                   aria-label="Sort products"
@@ -944,7 +944,7 @@ export function Catalog() {
                 className="clear-chip"
                 onClick={clear}
               >
-                Clear filters
+                Clear Filters
               </button>
             </div>
           )}
@@ -1029,11 +1029,11 @@ export function Catalog() {
           ) : (
             <Empty
               icon="search"
-              title="No products match your filters"
+              title="No Products Match Your Filters"
               description="Try another brand, category or price range."
               action={
                 <Button onClick={clear}>
-                  Clear filters
+                  Clear Filters
                 </Button>
               }
             />
@@ -1063,7 +1063,7 @@ export function Catalog() {
 
             <div className="mobile-filter-head">
               <strong>
-                Filter products
+                Filter Products
               </strong>
 
               <button

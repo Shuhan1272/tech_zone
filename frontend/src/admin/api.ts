@@ -43,6 +43,9 @@ export type Detail = {
   members?: { id: number; email: string; is_active: boolean; is_staff: boolean }[];
 };
 export type Stats = {
+  start?: string;
+  end?: string;
+  days?: number;
   sellers: {
     product_name: string;
     units: number;
@@ -61,8 +64,19 @@ export type Stats = {
   summary?: Record<string, number>;
 };
 export const sessionKey = 'techzone.ops.access';
+const SMALL_WORDS = new Set(['a', 'an', 'and', 'of', 'or', 'the', 'to', 'in', 'on', 'for', 'by']);
+
+/** snake_case or plain text → Title Case ("payment_status" → "Payment Status"). */
 export const title = (value: string) =>
-  value.replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase());
+  value
+    .replaceAll('_', ' ')
+    .split(' ')
+    .map((word, index) =>
+      index > 0 && SMALL_WORDS.has(word.toLowerCase())
+        ? word.toLowerCase()
+        : word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(' ');
 export const money = (value: unknown) =>
   '৳' +
   Number(value).toLocaleString('en-BD', {
@@ -74,26 +88,28 @@ export const labels: Record<string, string> = {
   is_active: 'Active',
   is_approved: 'Approved',
   sku: 'SKU',
+  is_emi: 'EMI',
+  emi_months: 'EMI Months',
   created_at: 'Created',
-  collect_cod: 'Confirm COD collection',
-  confirmed: 'Confirm order',
-  cancelled: 'Cancel order',
-  shipped: 'Mark shipped',
-  delivered: 'Mark delivered',
-  activate_staff: 'Activate staff account',
-  deactivate_staff: 'Suspend staff account',
+  collect_cod: 'Confirm COD Collection',
+  confirmed: 'Confirm Order',
+  cancelled: 'Cancel Order',
+  shipped: 'Mark Shipped',
+  delivered: 'Mark Delivered',
+  activate_staff: 'Activate Staff Account',
+  deactivate_staff: 'Suspend Staff Account',
   groups: 'Roles',
   group: 'Role',
   permissions: 'Permissions',
-  user_permissions: 'Additional permissions',
-  first_name: 'First name',
-  last_login: 'Last sign-in',
+  user_permissions: 'Additional Permissions',
+  first_name: 'First Name',
+  last_login: 'Last Sign-In',
   date_joined: 'Joined',
   action_flag: 'Action',
   object_repr: 'Record',
   action_time: 'Time',
   permission_count: 'Permissions',
-  member_count: 'Assigned accounts',
+  member_count: 'Assigned Accounts',
 };
 export const label = (key: string) => labels[key] || title(key);
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {

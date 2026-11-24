@@ -158,6 +158,31 @@ class Order(models.Model):
         default=0
     )
 
+    # =====================================================
+    # EMI (0% instalments, paid online through SSLCommerz)
+    # =====================================================
+
+    # EMI orders are priced at the regular price; product
+    # discounts are cash-payment discounts only.
+    is_emi = models.BooleanField(default=False)
+
+    emi_months = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True
+    )
+
+    @property
+    def emi_monthly_amount(self):
+        if not self.is_emi or not self.emi_months:
+            return None
+
+        from .services import emi_monthly_amount
+
+        return emi_monthly_amount(
+            self.total_amount,
+            self.emi_months
+        )
+
     total_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2

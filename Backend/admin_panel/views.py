@@ -3,7 +3,7 @@
 import hashlib
 import json
 from collections import defaultdict
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
@@ -85,7 +85,7 @@ def workspace(request):
             "email": user.email,
             "name": user.get_full_name() or user.email.split("@", 1)[0],
             "is_superuser": user.is_superuser,
-            "role": "Workspace owner" if user.is_superuser else "Staff member",
+            "role": "Workspace Owner" if user.is_superuser else "Staff Member",
             "can_overview": permitted(user, resources["orders"]),
             "can_flat_discount": permitted(user, resources["variants"]),
             "sections": sections,
@@ -184,14 +184,14 @@ def filtered_records(request, key, resource):
 
     filters = {}
     if key == "variants":
-        filters["inventory"] = [("low", "Low stock (1–5)"), ("out", "Out of stock")]
+        filters["inventory"] = [("low", "Low Stock (1–5)"), ("out", "Out of Stock")]
         stock = request.query_params.get("inventory")
         if stock == "low":
             records = records.filter(stock__range=(1, 5))
         elif stock == "out":
             records = records.filter(stock=0)
     if key == "questions":
-        filters["unanswered"] = [("1", "Awaiting answer"), ("0", "Answered")]
+        filters["unanswered"] = [("1", "Awaiting Answer"), ("0", "Answered")]
         unanswered = Q(answer="") | Q(answer__isnull=True)
         if request.query_params.get("unanswered") == "1":
             records = records.filter(unanswered)
@@ -498,14 +498,44 @@ def flat_discount(request):
     return Response(flat_discount_state(user))
 
 
+OVERVIEW_PERIODS = {"1": 1, "7": 7, "30": 30, "90": 90}
+OVERVIEW_MAX_DAYS = 366
+
+
+def overview_range(params):
+    """Reporting window in the store timezone.
+
+    Either a preset (?days=1 is today only, 7, 30, 90) or a custom
+    calendar range (?start=YYYY-MM-DD&end=YYYY-MM-DD, both inclusive).
+    """
+    today = timezone.localdate()
+    raw_start, raw_end = params.get("start"), params.get("end")
+    if raw_start or raw_end:
+        try:
+            start = date.fromisoformat(str(raw_start))
+            end = date.fromisoformat(str(raw_end))
+        except ValueError:
+            raise ValidationError({"start": "Choose a valid start and end date."})
+        if start > end:
+            raise ValidationError({"start": "Start date must be on or before the end date."})
+        if end > today:
+            raise ValidationError({"end": "End date cannot be in the future."})
+        if (end - start).days + 1 > OVERVIEW_MAX_DAYS:
+            raise ValidationError(
+                {"start": f"Choose a range of at most {OVERVIEW_MAX_DAYS} days."}
+            )
+        return start, end
+    days = OVERVIEW_PERIODS.get(params.get("days"), 30)
+    return today - timedelta(days=days - 1), today
+
+
 @api_view(["GET"])
 @permission_classes([IsActiveStaff])
 def overview(request):
     resource_for("orders", request.user)
-    days = {"7": 7, "30": 30, "90": 90}.get(request.query_params.get("days"), 30)
-    today = timezone.localdate()
-    start = today - timedelta(days=days - 1)
-    orders = Order.objects.filter(created_at__date__range=(start, today))
+    start, end = overview_range(request.query_params)
+    days = (end - start).days + 1
+    orders = Order.objects.filter(created_at__date__range=(start, end))
     paid = orders.filter(payment_status="paid").exclude(status="cancelled")
     daily = {
         row["day"]: row["total"]
@@ -524,6 +554,9 @@ def overview(request):
     )
     return Response(
         {
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "days": days,
             "sellers": list(sellers),
             "revenue": total,
             "orders": orders.count(),

@@ -299,6 +299,8 @@ class OrderAdmin(admin.ModelAdmin):
         "discount_amount",
         "shipping_charge",
         "total_amount",
+        "is_emi",
+        "emi_months",
         "created_at",
         "updated_at",
     ]
@@ -359,6 +361,8 @@ class OrderAdmin(admin.ModelAdmin):
                     "discount_amount",
                     "shipping_charge",
                     "total_amount",
+                    "is_emi",
+                    "emi_months",
                 ]
             },
         ),

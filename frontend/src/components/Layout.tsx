@@ -961,17 +961,17 @@ export function Layout({
         <div className="container-wide announcement-inner">
           <span>
             <Icon name="sparkle" size={14} />
-            Your destination for smarter tech
+            Your Destination for Smarter Tech
           </span>
 
           <span className="announcement-right">
             <Icon name="shield-check" size={15} />
-            Authentic products
+            Authentic Products
 
             <i />
 
             <Icon name="truck" size={15} />
-            Nationwide delivery
+            Nationwide Delivery
           </span>
         </div>
       </div>
@@ -1114,7 +1114,7 @@ export function Layout({
                     <div className="account-menu-user">
                       <strong>
                         {auth.user.first_name ||
-                          'My account'}
+                          'My Account'}
                       </strong>
 
                       <small>{auth.user.email}</small>
@@ -1127,7 +1127,7 @@ export function Layout({
                       }
                     >
                       <Icon name="user" size={17} />
-                      My profile
+                      My Profile
                     </Link>
 
                     <Link
@@ -1137,7 +1137,7 @@ export function Layout({
                       }
                     >
                       <Icon name="receipt" size={17} />
-                      My orders
+                      My Orders
                     </Link>
 
                     <Link
@@ -1158,7 +1158,7 @@ export function Layout({
                       }}
                     >
                       <Icon name="logout" size={17} />
-                      Sign out
+                      Sign Out
                     </button>
                   </div>,
                   document.body
@@ -1170,7 +1170,7 @@ export function Layout({
                   to="/login"
                   className="sign-in"
                 >
-                  Sign in
+                  Sign In
                 </Link>
 
                 <Link
@@ -1465,7 +1465,7 @@ export function Layout({
 
             <div className="footer-trust">
               <Icon name="shield-check" size={17} />
-              Shop confidently with TechZone
+              Shop Confidently with TechZone
             </div>
           </div>
 
@@ -1478,13 +1478,13 @@ export function Layout({
 
             <div style={footerStyles.link}>
               <Link to="/catalog">
-                All products
+                All Products
               </Link>
             </div>
 
             <div style={footerStyles.link}>
               <Link to="/catalog?featured=true">
-                Featured deals
+                Featured Deals
               </Link>
             </div>
 
@@ -1496,7 +1496,7 @@ export function Layout({
 
             <div style={footerStyles.link}>
               <Link to="/compare">
-                Compare products
+                Compare Products
               </Link>
             </div>
           </div>
@@ -1505,18 +1505,18 @@ export function Layout({
 
           <div style={footerStyles.column}>
             <h4 style={footerStyles.heading}>
-              My account
+              My Account
             </h4>
 
             <div style={footerStyles.link}>
               <Link to="/account">
-                Account settings
+                Account Settings
               </Link>
             </div>
 
             <div style={footerStyles.link}>
               <Link to="/orders">
-                Order history
+                Order History
               </Link>
             </div>
 
@@ -1603,7 +1603,7 @@ export function Layout({
               </strong>
 
               <span>
-                Compare specifications side by side
+                Compare Specifications Side by Side
               </span>
             </div>
 
@@ -1611,7 +1611,7 @@ export function Layout({
               to="/compare"
               className="btn btn-primary btn-small"
             >
-              Compare now
+              Compare Now
               <Icon name="arrow" size={16} />
             </Link>
 
@@ -1694,7 +1694,7 @@ export function Layout({
                 <Button
                   onClick={() => nav('/login')}
                 >
-                  Sign in
+                  Sign In
                 </Button>
 
                 <Button

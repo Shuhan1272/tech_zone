@@ -1,5 +1,5 @@
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_CEILING, ROUND_HALF_UP
 
 from django.db import transaction
 from django.db.models import F
@@ -19,6 +19,33 @@ from .models import Order
 # Shipping is 10% of each product's selling price, i.e. 10% of the
 # product subtotal (before any promo/staff discount code).
 SHIPPING_RATE = Decimal('0.10')
+
+
+# =========================================================
+# EMI
+# =========================================================
+
+# 0% EMI through SSLCommerz partner bank cards.
+EMI_MONTH_CHOICES = (3, 6, 9, 12)
+EMI_MAX_MONTHS = 12
+
+# Bank EMI needs a minimum purchase; products and orders below this
+# amount are sold with cash/online payment only.
+EMI_MIN_AMOUNT = Decimal('5000.00')
+
+
+def emi_monthly_amount(total, months):
+    """Monthly instalment rounded up to the next whole taka."""
+
+    total = Decimal(str(total or 0))
+
+    if not months or total <= 0:
+        return Decimal('0')
+
+    return (total / Decimal(months)).quantize(
+        Decimal('1'),
+        rounding=ROUND_CEILING
+    )
 
 
 def calculate_shipping(subtotal):

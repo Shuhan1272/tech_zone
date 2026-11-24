@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { api, money, title, type Stats } from './api';
 import { Icon, ErrorBox, Grid } from './ui';
 
@@ -10,18 +10,45 @@ type WorkspaceHealth = {
 
 type Props = { open: (id: number) => void; go: () => void };
 
+type Range = { start: string; end: string };
+
+const PRESETS: [string, string][] = [
+  ['1', 'Today'],
+  ['7', 'Last 7 Days'],
+  ['30', 'Last 30 Days'],
+  ['90', 'Last 90 Days'],
+  ['custom', 'Custom Range…'],
+];
+
+/** Today's date (YYYY-MM-DD) in the store timezone. */
+const storeToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+
+const shortDay = (value: string) =>
+  new Date(value + 'T00:00:00').toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
 export function Overview({ open, go }: Props) {
-  const [days, setDays] = useState('30');
+  const [period, setPeriod] = useState('30');
+  const [range, setRange] = useState<Range | null>(null);
+  const [draft, setDraft] = useState<Range>({ start: '', end: '' });
   const [stats, setStats] = useState<Stats | null>(null);
   const [health, setHealth] = useState<WorkspaceHealth>({});
   const [error, setError] = useState('');
   const [refresh, setRefresh] = useState(0);
 
+  const custom = period === 'custom';
+  const query = custom ? range && `start=${range.start}&end=${range.end}` : `days=${period}`;
+
   useEffect(() => {
+    // A custom range loads only after both dates are applied.
+    if (!query) return;
     let live = true;
     setStats(null);
     setError('');
-    api<Stats>(`overview/?days=${days}`)
+    api<Stats>(`overview/?${query}`)
       .then((result) => {
         if (live) setStats(result);
       })
@@ -31,7 +58,36 @@ export function Overview({ open, go }: Props) {
     return () => {
       live = false;
     };
-  }, [days, refresh]);
+  }, [query, refresh]);
+
+  const today = storeToday();
+  const draftError =
+    draft.start && draft.end && draft.start > draft.end
+      ? 'Start date must be on or before the end date.'
+      : '';
+
+  function applyRange(event: FormEvent) {
+    event.preventDefault();
+    if (!draft.start || !draft.end || draftError) return;
+    setRange({ ...draft });
+  }
+
+  // Wording for the selected reporting window.
+  const days = stats?.days ?? Number(period);
+  const windowText =
+    custom && stats?.start && stats?.end
+      ? stats.start === stats.end
+        ? `on ${shortDay(stats.start)}`
+        : `from ${shortDay(stats.start)} to ${shortDay(stats.end)}`
+      : period === '1'
+        ? 'today'
+        : `in the last ${days} days`;
+  const windowLabel =
+    custom && stats?.start && stats?.end
+      ? stats.start === stats.end
+        ? shortDay(stats.start)
+        : `${shortDay(stats.start)} – ${shortDay(stats.end)}`
+      : PRESETS.find(([value]) => value === period)?.[1] || `Last ${days} Days`;
 
   useEffect(() => {
     let live = true;
@@ -56,7 +112,7 @@ export function Overview({ open, go }: Props) {
         <div>
           <small className="kicker">YOUR STORE, AT A GLANCE</small>
           <h1>
-            Store overview<span className="heading-dot">.</span>
+            Store Overview<span className="heading-dot">.</span>
           </h1>
           <p className="page-description">
             A clear view of performance, your team, and what needs attention.
@@ -72,32 +128,72 @@ export function Overview({ open, go }: Props) {
           </button>
           <select
             aria-label="Reporting period"
-            value={days}
-            onChange={(event) => setDays(event.target.value)}
+            value={period}
+            onChange={(event) => {
+              const next = event.target.value;
+              setPeriod(next);
+              if (next === 'custom' && !draft.start) {
+                setDraft({ start: today, end: today });
+              }
+            }}
           >
-            {[7, 30, 90].map((period) => (
-              <option value={period} key={period}>
-                Last {period} days
+            {PRESETS.map(([value, text]) => (
+              <option value={value} key={value}>
+                {text}
               </option>
             ))}
           </select>
         </div>
       </header>
+      {custom && (
+        <form className="card range-picker" onSubmit={applyRange}>
+          <label>
+            <span>From</span>
+            <input
+              type="date"
+              required
+              max={draft.end || today}
+              value={draft.start}
+              onChange={(event) => setDraft((value) => ({ ...value, start: event.target.value }))}
+            />
+          </label>
+          <label>
+            <span>To</span>
+            <input
+              type="date"
+              required
+              min={draft.start || undefined}
+              max={today}
+              value={draft.end}
+              onChange={(event) => setDraft((value) => ({ ...value, end: event.target.value }))}
+            />
+          </label>
+          <button className="primary" disabled={!draft.start || !draft.end || !!draftError}>
+            <Icon name="check" />
+            Show Overview
+          </button>
+          {draftError ? (
+            <p className="range-note error">{draftError}</p>
+          ) : !range ? (
+            <p className="range-note">Pick a start and end date, then select Show Overview.</p>
+          ) : null}
+        </form>
+      )}
       <ErrorBox message={error} />
-      {stats ? (
+      {!query ? null : stats ? (
         <>
           <div className="kpis">
             {[
-              ['Paid revenue', money(stats.revenue), 'wallet', 'Paid, non-cancelled orders'],
+              ['Paid Revenue', money(stats.revenue), 'wallet', 'Paid, non-cancelled orders'],
               [
-                'Total orders',
+                'Total Orders',
                 stats.orders.toLocaleString(),
                 'orders',
                 'All orders in this period',
               ],
-              ['Average order value', money(stats.average), 'chart', 'Average across paid orders'],
+              ['Average Order Value', money(stats.average), 'chart', 'Average across paid orders'],
               [
-                'Awaiting confirmation',
+                'Awaiting Confirmation',
                 stats.pending.toLocaleString(),
                 'clock',
                 'Pending orders in this period',
@@ -119,14 +215,14 @@ export function Overview({ open, go }: Props) {
               <div className="cardhead">
                 <div>
                   <small className="kicker">PERFORMANCE</small>
-                  <h2>Revenue overview</h2>
+                  <h2>Revenue Overview</h2>
                 </div>
                 <span className="legend">
                   <i /> Paid revenue · BDT
                 </span>
               </div>
               <div className="revenue-total">
-                {money(stats.revenue)} <span>in the last {days} days</span>
+                {money(stats.revenue)} <span>{windowText}</span>
               </div>
               <div className="chart-area">
                 <div className="chart-grid" aria-hidden="true">
@@ -138,7 +234,7 @@ export function Overview({ open, go }: Props) {
                 <div
                   className="bars"
                   role="img"
-                  aria-label={`Daily paid revenue for the last ${days} days. Total ${money(stats.revenue)}.`}
+                  aria-label={`Daily paid revenue ${windowText}. Total ${money(stats.revenue)}.`}
                 >
                   {stats.series.map((point) => (
                     <div
@@ -174,7 +270,7 @@ export function Overview({ open, go }: Props) {
               <div className="cardhead">
                 <div>
                   <small className="kicker">FULFILLMENT</small>
-                  <h2>Order status</h2>
+                  <h2>Order Status</h2>
                 </div>
                 <span className="count-pill">{stats.orders} total</span>
               </div>
@@ -207,7 +303,7 @@ export function Overview({ open, go }: Props) {
               <div className="cardhead">
                 <div>
                   <small className="kicker">LATEST ACTIVITY</small>
-                  <h2>Recent orders</h2>
+                  <h2>Recent Orders</h2>
                 </div>
                 <button className="link" onClick={go}>
                   View all →
@@ -223,7 +319,7 @@ export function Overview({ open, go }: Props) {
               <div className="cardhead">
                 <div>
                   <small className="kicker">OPERATIONS</small>
-                  <h2>Needs attention</h2>
+                  <h2>Needs Attention</h2>
                 </div>
                 <span className="iconbox">
                   <Icon name="shield" />
@@ -253,7 +349,7 @@ export function Overview({ open, go }: Props) {
                     <span className="iconbox">
                       <Icon name="shield" />
                     </span>
-                    <strong>You're all caught up</strong>
+                    <strong>You're All Caught Up</strong>
                     <p>No outstanding alerts in the sections you can access.</p>
                   </div>
                 )}
@@ -265,9 +361,9 @@ export function Overview({ open, go }: Props) {
             <div className="cardhead">
               <div>
                 <small className="kicker">PRODUCT PERFORMANCE</small>
-                <h2>Best-selling products</h2>
+                <h2>Best-Selling Products</h2>
               </div>
-              <span className="caption">Ranked by paid units · Last {days} days</span>
+              <span className="caption">Ranked by Paid Units · {windowLabel}</span>
             </div>
             {stats.sellers.length ? (
               <div className="tablewrap">
@@ -276,7 +372,7 @@ export function Overview({ open, go }: Props) {
                     <tr>
                       <th>Rank</th>
                       <th>Product</th>
-                      <th>Units sold</th>
+                      <th>Units Sold</th>
                       <th>Performance</th>
                     </tr>
                   </thead>
@@ -310,7 +406,7 @@ export function Overview({ open, go }: Props) {
           </section>
           <div className="dashboard-foot">
             <span>
-              <Icon name="shield" /> Permission-aware workspace
+              <Icon name="shield" /> Permission-Aware Workspace
             </span>
             <span>Reports use the store timezone · BDT</span>
           </div>

@@ -12,7 +12,7 @@ export function DeleteReview({ summary, busy, onConfirm, onBack }: Props) {
 
   return (
     <section className="confirm" aria-label="Review deletion">
-      <h3>{blocked ? 'Deletion blocked' : 'Confirm permanent deletion'}</h3>
+      <h3>{blocked ? 'Deletion Blocked' : 'Confirm Permanent Deletion'}</h3>
       <p>
         {blocked
           ? 'Resolve these dependencies before deleting this record.'
@@ -26,7 +26,7 @@ export function DeleteReview({ summary, busy, onConfirm, onBack }: Props) {
       <div className="buttons">
         {!blocked && (
           <button className="danger" disabled={busy} onClick={onConfirm}>
-            {busy ? 'Deleting…' : 'Confirm deletion'}
+            {busy ? 'Deleting…' : 'Confirm Deletion'}
           </button>
         )}
         <button disabled={busy} onClick={onBack}>

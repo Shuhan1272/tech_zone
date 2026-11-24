@@ -103,13 +103,12 @@ export function Console() {
   const flatPage = key === FLAT_DISCOUNT && !!workspace?.can_flat_discount;
   const showFlatNav =
     !!workspace?.can_flat_discount &&
-    (!navigationSearch ||
-      'flat discount pricing'.includes(navigationSearch.toLowerCase()));
+    (!navigationSearch || 'flat discount pricing'.includes(navigationSearch.toLowerCase()));
   const section = flatPage
     ? undefined
     : sections.find((item) => item.key === key) || (!analytics ? sections[0] : undefined);
-  const name = workspace?.name || workspace?.email?.split('@')[0] || 'Team member';
-  const role = workspace?.role || 'Staff workspace';
+  const name = workspace?.name || workspace?.email?.split('@')[0] || 'Team Member';
+  const role = workspace?.role || 'Staff Workspace';
   const groups = Array.from(new Set(sections.map((item) => item.group)));
   const filteredSections = sections.filter((item) =>
     `${item.title} ${item.group}`.toLowerCase().includes(navigationSearch.toLowerCase()),
@@ -142,7 +141,7 @@ export function Console() {
           document.getElementById('workspace-content')?.focus();
         }}
       >
-        Skip to content
+        Skip to Content
       </a>
       {menu && (
         <button className="scrim" aria-label="Close navigation" onClick={() => setMenu(false)} />
@@ -162,13 +161,13 @@ export function Console() {
           <span className="workspace-avatar">TZ</span>
           <span>
             <b>TechZone Store</b>
-            <small>Operations workspace</small>
+            <small>Operations Workspace</small>
           </span>
           <Icon name="chevron" />
         </div>
         <label className="nav-search">
           <Icon name="search" />
-          <span className="sr-only">Find a section</span>
+          <span className="sr-only">Find a Section</span>
           <input
             type="search"
             placeholder="Find a section…"
@@ -202,7 +201,7 @@ export function Console() {
                 onClick={() => go(FLAT_DISCOUNT)}
               >
                 <Icon name="discounts" />
-                <span>Flat discount</span>
+                <span>Flat Discount</span>
                 {flatPage && <i />}
               </button>
             </div>
@@ -243,7 +242,7 @@ export function Console() {
           <button
             className="logout icon-button"
             aria-label="Sign out"
-            title="Sign out"
+            title="Sign Out"
             onClick={signOut}
           >
             <Icon name="exit" />
@@ -264,7 +263,7 @@ export function Console() {
             </button>
             <span>Workspace</span>
             <Icon name="chevron" />
-            <b>{flatPage ? 'Flat discount' : section?.title || 'Overview'}</b>
+            <b>{flatPage ? 'Flat Discount' : section?.title || 'Overview'}</b>
           </div>
           <div className="top-account">
             <time className="today" dateTime={new Date().toISOString().slice(0, 10)}>
@@ -312,7 +311,7 @@ export function Console() {
               <span className="empty-icon">
                 <Icon name="shield" />
               </span>
-              <h1>Your workspace is ready</h1>
+              <h1>Your Workspace Is Ready</h1>
               <p>
                 Ask your workspace owner to assign a role or permissions so you can start managing
                 your store.
@@ -322,7 +321,7 @@ export function Console() {
           <footer className="workspace-footer">
             <span>© {new Date().getFullYear()} TechZone</span>
             <span>
-              <Icon name="lock" /> Staff operations workspace
+              <Icon name="lock" /> Staff Operations Workspace
             </span>
           </footer>
         </div>

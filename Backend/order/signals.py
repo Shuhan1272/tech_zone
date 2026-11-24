@@ -126,7 +126,14 @@ def order_email_notification(
                 f"Subtotal: BDT {order.subtotal:,.2f}\n"
                 f"Discount: BDT {order.discount_amount:,.2f}\n"
                 f"Shipping: BDT {order.shipping_charge:,.2f}\n"
-                f"Total: BDT {order.total_amount:,.2f}\n\n"
+                f"Total: BDT {order.total_amount:,.2f}\n"
+                + (
+                    f"EMI: {order.emi_months} months x "
+                    f"BDT {order.emi_monthly_amount:,.0f}/month (0% interest)\n"
+                    if order.is_emi
+                    else ""
+                )
+                + "\n"
                 f"{payment_note}\n\n"
                 f"Shipping Address:\n"
                 f"{order.shipping_address}\n\n"

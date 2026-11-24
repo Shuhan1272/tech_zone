@@ -72,12 +72,12 @@ export function Account() {
   return (
     <div className="container-wide page-space">
       <Breadcrumbs
-        items={[{ label: 'My account' }]}
+        items={[{ label: 'My Account' }]}
       />
 
       <PageHeading
         eyebrow="YOUR ACCOUNT"
-        title="Account settings"
+        title="Account Settings"
         description="Manage your personal information and preferences."
       />
 
@@ -103,7 +103,7 @@ export function Account() {
 
           <Link to="/orders">
             <Icon name="receipt" size={18} />
-            My orders
+            My Orders
           </Link>
 
           <Link to="/wishlist">
@@ -113,14 +113,14 @@ export function Account() {
 
           <Link to="/account/password">
             <Icon name="lock" size={18} />
-            Change password
+            Change Password
           </Link>
         </aside>
 
         {/* PERSONAL INFORMATION */}
 
         <div className="form-card">
-          <h2>Personal information</h2>
+          <h2>Personal Information</h2>
 
           <p>Keep your account details up to date.</p>
 
@@ -131,7 +131,7 @@ export function Account() {
             onSubmit={save}
           >
             <label className="form-field">
-              <span>First name</span>
+              <span>First Name</span>
 
               <input
                 required
@@ -141,7 +141,7 @@ export function Account() {
             </label>
 
             <label className="form-field">
-              <span>Last name</span>
+              <span>Last Name</span>
 
               <input
                 required
@@ -151,7 +151,7 @@ export function Account() {
             </label>
 
             <label className="form-field full">
-              <span>Email address</span>
+              <span>Email Address</span>
 
               <input
                 value={auth.user?.email || ''}
@@ -164,7 +164,7 @@ export function Account() {
             </label>
 
             <label className="form-field full">
-              <span>Phone number</span>
+              <span>Phone Number</span>
 
               <input
                 type="tel"
@@ -174,7 +174,7 @@ export function Account() {
             </label>
 
             <Button loading={busy}>
-              Save changes
+              Save Changes
               <Icon name="check" size={17} />
             </Button>
           </form>
@@ -275,7 +275,7 @@ export function AddressPage() {
       <Breadcrumbs
         items={[
           {
-            label: 'My account',
+            label: 'My Account',
             to: '/account',
           },
           {
@@ -302,14 +302,14 @@ export function AddressPage() {
           >
             {(
               [
-                ['first_name', 'First name'],
-                ['last_name', 'Last name'],
+                ['first_name', 'First Name'],
+                ['last_name', 'Last Name'],
                 ['company', 'Company (optional)'],
-                ['address1', 'Address line 1'],
+                ['address1', 'Address Line 1'],
                 ['address2', 'Address line 2 (optional)'],
                 ['city', 'City'],
                 ['region', 'Division / region'],
-                ['postal_code', 'Postal code'],
+                ['postal_code', 'Postal Code'],
                 ['country', 'Country'],
               ] as [keyof Address, string][]
             ).map(([key, label]) => (
@@ -337,7 +337,7 @@ export function AddressPage() {
 
             <div className="full">
               <Button loading={busy}>
-                Save address
+                Save Address
                 <Icon name="check" size={17} />
               </Button>
             </div>
@@ -404,18 +404,18 @@ export function ChangePassword() {
       <Breadcrumbs
         items={[
           {
-            label: 'My account',
+            label: 'My Account',
             to: '/account',
           },
           {
-            label: 'Change password',
+            label: 'Change Password',
           },
         ]}
       />
 
       <PageHeading
         eyebrow="ACCOUNT SECURITY"
-        title="Change password"
+        title="Change Password"
         description="Keep your account secure with a strong password."
       />
 
@@ -427,7 +427,7 @@ export function ChangePassword() {
           onSubmit={submit}
         >
           <label className="form-field">
-            <span>Current password</span>
+            <span>Current Password</span>
 
             <input
               type="password"
@@ -439,7 +439,7 @@ export function ChangePassword() {
           </label>
 
           <label className="form-field">
-            <span>New password</span>
+            <span>New Password</span>
 
             <input
               type="password"
@@ -452,7 +452,7 @@ export function ChangePassword() {
           </label>
 
           <label className="form-field">
-            <span>Confirm new password</span>
+            <span>Confirm New Password</span>
 
             <input
               type="password"
@@ -465,7 +465,7 @@ export function ChangePassword() {
           </label>
 
           <Button loading={busy}>
-            Update password
+            Update Password
           </Button>
         </form>
       </div>

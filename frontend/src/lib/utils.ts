@@ -42,6 +42,28 @@ export const shippingFor = (subtotal: number) =>
     : 0;
 
 // ============================================================
+// EMI
+// ============================================================
+
+/**
+ * 0% EMI through SSLCommerz. Mirrors Backend/order/services.py.
+ * EMI is charged at the regular (non-discounted) price.
+ */
+
+export const EMI_MONTHS = [3, 6, 9, 12] as const;
+export const EMI_MAX_MONTHS = 12;
+export const EMI_MIN_AMOUNT = 5000;
+
+export type EmiMonths = (typeof EMI_MONTHS)[number];
+
+/** Monthly instalment rounded up to the next whole taka. */
+export const emiMonthly = (total: number, months: number) =>
+  total > 0 && months > 0 ? Math.ceil(total / months) : 0;
+
+/** Remembers the payment plan picked on a product page for checkout. */
+export const PAYMENT_PLAN_KEY = 'techzone_payment_plan';
+
+// ============================================================
 // API RESPONSE UTILITIES
 // ============================================================
 
@@ -325,20 +347,20 @@ export function validateGatewayUrl(
 
 export const pcLabels: Record<string, string> = {
   cpu: 'Processor',
-  cpu_cooler: 'CPU cooler',
+  cpu_cooler: 'CPU Cooler',
   motherboard: 'Motherboard',
   ram: 'Memory (RAM)',
   storage: 'Storage',
-  gpu: 'Graphics card',
-  psu: 'Power supply',
-  case: 'PC case',
+  gpu: 'Graphics Card',
+  psu: 'Power Supply',
+  case: 'PC Case',
   monitor: 'Monitor',
-  case_cooler: 'Case fan',
+  case_cooler: 'Case Fan',
   keyboard: 'Keyboard',
   mouse: 'Mouse',
   speaker: 'Speakers',
   headphone: 'Headphones',
-  network: 'Network adapter',
+  network: 'Network Adapter',
   ups: 'UPS',
 };
 

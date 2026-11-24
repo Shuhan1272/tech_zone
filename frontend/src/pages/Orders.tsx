@@ -94,13 +94,13 @@ function isActiveRefund(status: RefundStatus) {
 
 function refundStatusLabel(status: RefundStatus) {
   const labels: Record<RefundStatus, string> = {
-    requested: 'Request submitted',
+    requested: 'Request Submitted',
     approved: 'Approved',
     rejected: 'Rejected',
-    initiating: 'Starting refund',
-    processing: 'Processing refund',
-    refunded: 'Refund completed',
-    failed: 'Refund failed',
+    initiating: 'Starting Refund',
+    processing: 'Processing Refund',
+    refunded: 'Refund Completed',
+    failed: 'Refund Failed',
   };
 
   return labels[status] || status;
@@ -190,12 +190,12 @@ export function Orders() {
   return (
     <div className="container-wide page-space">
       <Breadcrumbs
-        items={[{ label: 'My orders' }]}
+        items={[{ label: 'My Orders' }]}
       />
 
       <PageHeading
         eyebrow="MY ACCOUNT"
-        title="My orders"
+        title="My Orders"
         description="Track your purchases and manage payments."
       />
 
@@ -247,14 +247,14 @@ export function Orders() {
       ) : (
         <Empty
           icon="receipt"
-          title="No orders yet"
+          title="No Orders Yet"
           description="Your orders will show up here after checkout."
           action={
             <Link
               to="/catalog"
               className="btn btn-primary"
             >
-              Start shopping
+              Start Shopping
             </Link>
           }
         />
@@ -332,7 +332,7 @@ function RefundStatusCard({
       >
         <div>
           <h2 style={{ marginBottom: 4 }}>
-            Refund status
+            Refund Status
           </h2>
 
           <p style={{ margin: 0, opacity: 0.75 }}>
@@ -415,12 +415,12 @@ function RefundStatusCard({
       )}
 
       <div className="summary-line">
-        <span>Refund amount</span>
+        <span>Refund Amount</span>
         <strong>{money(refund.amount)}</strong>
       </div>
 
       <div className="summary-line">
-        <span>Request date</span>
+        <span>Request Date</span>
         <strong>{shortDate(refund.created_at)}</strong>
       </div>
 
@@ -439,7 +439,7 @@ function RefundStatusCard({
           marginBottom: 16,
         }}
       >
-        <strong>Reason for refund</strong>
+        <strong>Reason for Refund</strong>
 
         <p
           style={{
@@ -486,7 +486,7 @@ function RefundStatusCard({
         <Icon name="refresh" size={17} />
         {refreshing
           ? 'Refreshing...'
-          : 'Refresh refund status'}
+          : 'Refresh Refund Status'}
       </Button>
     </div>
   );
@@ -518,7 +518,7 @@ function RefundRequestForm({
         marginTop: 20,
       }}
     >
-      <h2>Request a refund</h2>
+      <h2>Request a Refund</h2>
 
       <p>
         You are requesting a full refund of{' '}
@@ -609,7 +609,7 @@ function RefundRequestForm({
               void onSubmit(trimmedReason);
             }}
           >
-            Submit refund request
+            Submit Refund Request
           </Button>
 
           <Button
@@ -890,7 +890,7 @@ export function OrderDetail() {
       <div className="container-wide page-space">
         <Notice
           message={
-            error || 'Order not found'
+            error || 'Order Not Found'
           }
         />
       </div>
@@ -960,7 +960,7 @@ export function OrderDetail() {
       <Breadcrumbs
         items={[
           {
-            label: 'My orders',
+            label: 'My Orders',
             to: '/orders',
           },
           {
@@ -984,7 +984,7 @@ export function OrderDetail() {
               name="left"
               size={17}
             />
-            All orders
+            All Orders
           </Link>
         }
       />
@@ -1019,7 +1019,7 @@ export function OrderDetail() {
           <div className="form-card">
             <div className="order-status-header">
               <div>
-                <h2>Order status</h2>
+                <h2>Order Status</h2>
 
                 <p>
                   Track the progress of your purchase
@@ -1084,7 +1084,7 @@ export function OrderDetail() {
                   void loadRefund(id);
                 }}
               >
-                Retry refund status
+                Retry Refund Status
               </Button>
             </div>
           ) : refund ? (
@@ -1124,7 +1124,7 @@ export function OrderDetail() {
             style={{ marginTop: 20 }}
           >
             <h2>
-              Items in your order
+              Items in Your Order
             </h2>
 
             {order.items.map((item) => (
@@ -1167,7 +1167,7 @@ export function OrderDetail() {
 
           <div className="form-card">
             <h2>
-              Shipping details
+              Shipping Details
             </h2>
 
             <p className="shipping-detail">
@@ -1202,7 +1202,7 @@ export function OrderDetail() {
 
         <div className="summary-card order-summary">
           <h3>
-            Payment summary
+            Payment Summary
           </h3>
 
           <div className="summary-line">
@@ -1227,6 +1227,15 @@ export function OrderDetail() {
               +{money(order.shipping_charge ?? 0)}
             </strong>
           </div>
+
+          {order.is_emi && order.emi_months && (
+            <div className="summary-line emi-line">
+              <span>EMI ({order.emi_months} months, 0%)</span>
+              <strong>
+                {money(order.emi_monthly_amount ?? 0)}/month
+              </strong>
+            </div>
+          )}
 
           <div className="summary-divider" />
 
@@ -1275,7 +1284,7 @@ export function OrderDetail() {
                 }}
                 className="full-width"
               >
-                Request full refund
+                Request Full Refund
               </Button>
             )}
 
@@ -1304,7 +1313,7 @@ export function OrderDetail() {
                 }}
                 className="full-width"
               >
-                Cancel order
+                Cancel Order
               </Button>
             )}
 
@@ -1344,7 +1353,7 @@ export function OrderDetail() {
               name="refresh"
               size={17}
             />
-            Refresh status
+            Refresh Status
           </Button>
         </div>
       </div>
@@ -1484,7 +1493,7 @@ export function PaymentResult() {
               Transaction:{' '}
               <strong>
                 {transaction ||
-                  'Not supplied'}
+                  'Not Supplied'}
               </strong>
 
               <br />
@@ -1516,7 +1525,7 @@ export function PaymentResult() {
                 name="refresh"
                 size={18}
               />
-              Verify payment
+              Verify Payment
             </Button>
 
             {payment && (
@@ -1524,7 +1533,7 @@ export function PaymentResult() {
                 to={`/orders/${payment.order}`}
                 className="btn btn-outline"
               >
-                View order
+                View Order
               </Link>
             )}
 
@@ -1532,7 +1541,7 @@ export function PaymentResult() {
               to="/orders"
               className="text-action"
             >
-              All orders
+              All Orders
             </Link>
           </>
         )}

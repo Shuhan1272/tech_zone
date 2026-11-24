@@ -23,7 +23,8 @@ const when = (value: string | null) =>
       })
     : '';
 
-const percent = (value: unknown) => `${Number(value).toLocaleString('en-BD', { maximumFractionDigits: 2 })}%`;
+const percent = (value: unknown) =>
+  `${Number(value).toLocaleString('en-BD', { maximumFractionDigits: 2 })}%`;
 
 const QUICK = [10, 20, 30, 50];
 
@@ -93,11 +94,11 @@ export function FlatDiscount({ notify }: { notify: (text: string) => void }) {
         <div>
           <small className="kicker">STORE-WIDE PRICING</small>
           <h1>
-            Flat discount<span className="heading-dot">.</span>
+            Flat Discount<span className="heading-dot">.</span>
           </h1>
           <p className="page-description">
-            Take the same percentage off every product at once. Resetting brings back each
-            product's own discount.
+            Take the same percentage off every product at once. Resetting brings back each product's
+            own discount.
           </p>
         </div>
       </header>
@@ -118,9 +119,11 @@ export function FlatDiscount({ notify }: { notify: (text: string) => void }) {
               <Icon name="discounts" />
             </span>
             <div>
-              <small>Current status</small>
+              <small>Current Status</small>
               <strong>
-                {state.active ? `${percent(state.percentage)} off every product` : 'No flat discount'}
+                {state.active
+                  ? `${percent(state.percentage)} off every product`
+                  : 'No Flat Discount'}
               </strong>
               <p>
                 {state.active
@@ -141,10 +144,10 @@ export function FlatDiscount({ notify }: { notify: (text: string) => void }) {
             <section className="card flat-form">
               <form onSubmit={apply}>
                 <label htmlFor="flat-percentage">
-                  <b>Discount percentage</b>
+                  <b>Discount Percentage</b>
                   <small>
-                    Taken off the regular price of every product. Must be more than 0 and less
-                    than 100.
+                    Taken off the regular price of every product. Must be more than 0 and less than
+                    100.
                   </small>
                 </label>
                 <div className="flat-quick" role="group" aria-label="Quick percentages">
@@ -175,7 +178,7 @@ export function FlatDiscount({ notify }: { notify: (text: string) => void }) {
                   <span>%</span>
                   <button className="primary" disabled={busy || !canApply}>
                     <Icon name="check" />
-                    {state.active ? 'Update flat discount' : 'Apply flat discount'}
+                    {state.active ? 'Update Flat Discount' : 'Apply Flat Discount'}
                   </button>
                 </div>
                 {tooLarge && (
@@ -197,7 +200,9 @@ export function FlatDiscount({ notify }: { notify: (text: string) => void }) {
               <div className="flat-reset">
                 <div>
                   <b>Reset Flat Discount</b>
-                  <small>Removes the flat discount and restores every product's own discount.</small>
+                  <small>
+                    Removes the flat discount and restores every product's own discount.
+                  </small>
                 </div>
                 <button
                   type="button"

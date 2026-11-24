@@ -29,9 +29,9 @@ const ROTATE_MS = 4500;
 const MAX_SLIDES = 6;
 
 const kindLabel: Record<Kind, string> = {
-  deal: 'Top discount',
-  trending: 'Trending now',
-  new: 'New arrival',
+  deal: 'Top Discount',
+  trending: 'Trending Now',
+  new: 'New Arrival',
 };
 
 function toSlide(product: Product, kind: Kind): Slide | null {
@@ -194,7 +194,7 @@ export function CatalogSpotlight({
                 <span className="spotlight-cta">
                   {slide.kind === 'deal'
                     ? `Save ${money(slide.original - slide.price)} →`
-                    : 'Shop now →'}
+                    : 'Shop Now →'}
                 </span>
               </div>
 
